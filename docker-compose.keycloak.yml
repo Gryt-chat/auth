@@ -1,0 +1,243 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gryt-auth-postgres
+    environment:
+      POSTGRES_DB: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      POSTGRES_USER: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      POSTGRES_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+    volumes:
+      - gryt-auth-postgres-data:/var/lib/postgresql/data
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GRYT_AUTH_POSTGRES_USER:-keycloak} -d ${GRYT_AUTH_POSTGRES_DB:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak1:
+    image: quay.io/keycloak/keycloak:26.5.3
+    container_name: gryt-auth-keycloak-1
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-import:
+        condition: service_completed_successfully
+    environment:
+      # Admin user (bootstrap). Change for real deployments.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+
+      # Database
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      KC_DB_USERNAME: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+
+      # Hosting / proxy hints (Cloudflare Tunnel terminates TLS at the edge)
+      # IMPORTANT: Use a *full URL* so Keycloak does not reuse the origin port (e.g. :18080)
+      # and always advertises HTTPS for OIDC discovery and links.
+      KC_HOSTNAME: ${GRYT_KEYCLOAK_HOSTNAME_URL:-https://auth.gryt.chat}
+      KC_HOSTNAME_ADMIN: ${GRYT_KEYCLOAK_HOSTNAME_ADMIN_URL:-https://auth.gryt.chat}
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # Theme caching should be enabled in production
+      KC_SPI_THEME_CACHE_THEMES: ${KC_SPI_THEME_CACHE_THEMES:-true}
+      KC_SPI_THEME_CACHE_TEMPLATES: ${KC_SPI_THEME_CACHE_TEMPLATES:-true}
+
+      # Optional: make server endpoints happier behind a proxy
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+      # Observability
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_MANAGEMENT_PORT: "9000"
+      KC_HTTP_MANAGEMENT_SCHEME: "http"
+      KC_HTTP_ACCESS_LOG_ENABLED: "true"
+    command:
+      - start
+      # Realm import is handled by keycloak-import service (set GRYT_IMPORT_REALM=1 to enable).
+    volumes:
+      - ./themes:/opt/keycloak/themes:ro
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  keycloak2:
+    image: quay.io/keycloak/keycloak:26.5.3
+    container_name: gryt-auth-keycloak-2
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-import:
+        condition: service_completed_successfully
+    environment:
+      # Admin user (bootstrap). Change for real deployments.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+
+      # Database
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      KC_DB_USERNAME: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+
+      # Hosting / proxy hints (Cloudflare Tunnel terminates TLS at the edge)
+      # IMPORTANT: Use a *full URL* so Keycloak does not reuse the origin port (e.g. :18080)
+      # and always advertises HTTPS for OIDC discovery and links.
+      KC_HOSTNAME: ${GRYT_KEYCLOAK_HOSTNAME_URL:-https://auth.gryt.chat}
+      KC_HOSTNAME_ADMIN: ${GRYT_KEYCLOAK_HOSTNAME_ADMIN_URL:-https://auth.gryt.chat}
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # Theme caching should be enabled in production
+      KC_SPI_THEME_CACHE_THEMES: ${KC_SPI_THEME_CACHE_THEMES:-true}
+      KC_SPI_THEME_CACHE_TEMPLATES: ${KC_SPI_THEME_CACHE_TEMPLATES:-true}
+
+      # Optional: make server endpoints happier behind a proxy
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+      # Observability
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_MANAGEMENT_PORT: "9000"
+      KC_HTTP_MANAGEMENT_SCHEME: "http"
+      KC_HTTP_ACCESS_LOG_ENABLED: "true"
+    command:
+      - start
+    volumes:
+      - ./themes:/opt/keycloak/themes:ro
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  proxy:
+    image: haproxy:2.9-alpine
+    container_name: gryt-auth-proxy
+    depends_on:
+      keycloak1:
+        condition: service_healthy
+      keycloak2:
+        condition: service_healthy
+    ports:
+      # Bind to LAN by default so cloudflared can reach it via 192.168.x.x
+      # Example: GRYT_KEYCLOAK_BIND=127.0.0.1 GRYT_KEYCLOAK_PORT=18080 docker compose -f auth/docker-compose.keycloak.yml up
+      - "${GRYT_KEYCLOAK_BIND:-0.0.0.0}:${GRYT_KEYCLOAK_PORT:-18080}:8080"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.16.0
+    container_name: gryt-auth-postgres-exporter
+    profiles: ["monitoring"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${GRYT_AUTH_POSTGRES_USER:-keycloak}:${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}@postgres:5432/${GRYT_AUTH_POSTGRES_DB:-keycloak}?sslmode=disable"
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: gryt-auth-prometheus
+    profiles: ["monitoring"]
+    depends_on:
+      keycloak1:
+        condition: service_healthy
+      keycloak2:
+        condition: service_healthy
+      postgres-exporter:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${GRYT_PROMETHEUS_PORT:-19090}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: gryt-auth-alertmanager
+    profiles: ["monitoring"]
+    ports:
+      - "127.0.0.1:${GRYT_ALERTMANAGER_PORT:-19093}:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
+  # Deterministic config-as-code for dev/testing:
+  # Import the realm JSON into the DB (overriding existing config) BEFORE Keycloak starts.
+  # This avoids needing an admin login for automation (which can fail if the admin user is disabled/locked).
+  keycloak-import:
+    image: quay.io/keycloak/keycloak:26.5.3
+    container_name: gryt-auth-keycloak-import
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database (same as keycloak)
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      KC_DB_USERNAME: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+      # Enable import only when explicitly requested
+      GRYT_IMPORT_REALM: ${GRYT_IMPORT_REALM:-0}
+      # SMTP (Postmark) - injected into realm import on each start.
+      # DO NOT commit your token; set it via environment or a local .env file.
+      GRYT_SMTP_HOST: ${GRYT_SMTP_HOST:-smtp.postmarkapp.com}
+      GRYT_SMTP_PORT: ${GRYT_SMTP_PORT:-587}
+      GRYT_SMTP_FROM: ${GRYT_SMTP_FROM:-gryt@gryt.chat}
+      GRYT_SMTP_FROM_NAME: ${GRYT_SMTP_FROM_NAME:-Gryt Chat}
+      GRYT_SMTP_REPLY_TO: ${GRYT_SMTP_REPLY_TO:-gryt@gryt.chat}
+      GRYT_SMTP_REPLY_TO_NAME: ${GRYT_SMTP_REPLY_TO_NAME:-Gryt Chat}
+      # Postmark server token (required for verification emails to work)
+      GRYT_SMTP_USER: ${GRYT_SMTP_USER:-}
+      GRYT_SMTP_PASS: ${GRYT_SMTP_PASS:-}
+    entrypoint: ["bash", "/bootstrap/import_realm.sh"]
+    volumes:
+      - ./bootstrap/import_realm.sh:/bootstrap/import_realm.sh:ro
+      - ./realm:/opt/keycloak/data/import-src:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
+networks:
+  gryt-auth-network:
+    driver: bridge
+
+volumes:
+  gryt-auth-postgres-data:
+

@@ -1,0 +1,242 @@
+/* Gryt Keycloak Theme (login/register) */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("../fonts/AtkinsonHyperlegibleNextVF-Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Keep this close to Radix dark background (no gradients). */
+  --gryt-bg: #0b0d12;
+  --gryt-card: rgba(255, 255, 255, 0.06);
+  --gryt-card-border: rgba(255, 255, 255, 0.10);
+  --gryt-text: rgba(255, 255, 255, 0.92);
+  --gryt-muted: rgba(255, 255, 255, 0.70);
+  /* Default Gryt accent: Radix default is "violet" */
+  --gryt-accent: #7c3aed;
+  --gryt-danger: #ef4444;
+}
+
+body {
+  font-family: "Atkinson Hyperlegible Next", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif !important;
+  background: var(--gryt-bg) !important;
+  color: var(--gryt-text) !important;
+}
+
+/* Center card (Keycloak uses PatternFly login layout) */
+.login-pf,
+.login-pf-page {
+  min-height: 100vh !important;
+}
+
+.login-pf-page {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: transparent !important;
+}
+
+.login-pf-page .card-pf {
+  margin: 0 !important; /* prevent top offsets from base theme */
+}
+
+/* Hide default header area so centering is true */
+.login-pf-page-header {
+  display: none !important;
+}
+
+/* Make sure the wrapper doesn't constrain weirdly */
+#kc-content,
+#kc-content-wrapper {
+  width: 100% !important;
+  max-width: 420px !important;
+}
+
+/* Remove base theme background noise */
+.login-pf-page {
+  background: transparent !important;
+}
+
+.card-pf {
+  background: var(--gryt-card) !important;
+  border: 1px solid var(--gryt-card-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(14px);
+}
+
+/* Header */
+#kc-header,
+#kc-header-wrapper {
+  display: none !important;
+}
+
+/* Title */
+#kc-page-title {
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+/* Inputs */
+.pf-c-form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: var(--gryt-text) !important;
+}
+
+/* Fix "white squares" behind rounded inputs (input group wrappers) */
+.pf-c-input-group,
+.pf-c-input-group__text,
+.pf-c-form-control[readonly],
+.pf-c-form-control.pf-m-success,
+.pf-c-form-control.pf-m-warning,
+.pf-c-form-control.pf-m-error {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pf-c-input-group__text {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: var(--gryt-muted) !important;
+}
+
+/* Ensure password reveal buttons and similar don't show a white plate */
+button,
+.pf-c-button {
+  background-color: transparent;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Primary button */
+input[type="submit"],
+.pf-c-button.pf-m-primary {
+  background: var(--gryt-accent) !important; /* solid, no gradient */
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+  padding: 10px 14px !important;
+}
+
+input[type="submit"]:hover,
+.pf-c-button.pf-m-primary:hover {
+  filter: brightness(1.08);
+}
+
+/* Secondary links */
+a {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+a:hover {
+  color: #ffffff !important;
+}
+
+/* Registration prompt: hide "New user?" text, keep link only */
+/* We re-home the register link via JS into the form. Hide the original footer. */
+#kc-info {
+  display: none !important;
+}
+
+/* Remove password visibility toggle ("eye") */
+button[data-password-toggle] {
+  display: none !important;
+}
+
+/* When the toggle is hidden, ensure the password input stays nicely rounded */
+.pf-c-input-group > .pf-c-form-control {
+  border-top-right-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+}
+
+/* Secondary button (Create account) injected via JS */
+.gryt-secondary-button {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+  color: var(--gryt-text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+.gryt-secondary-button:hover {
+  filter: brightness(1.08);
+}
+
+/* Info + errors */
+.kc-feedback-text {
+  color: var(--gryt-muted) !important;
+}
+
+/* Alerts (required actions like email verification use these) */
+.pf-c-alert,
+.alert {
+  border-radius: 12px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: var(--gryt-text) !important;
+  box-shadow: none !important;
+}
+
+.pf-c-alert__title,
+.pf-c-alert__description,
+.alert,
+.alert * {
+  color: var(--gryt-text) !important;
+}
+
+.pf-c-alert.pf-m-danger,
+.alert-danger {
+  border-color: rgba(239, 68, 68, 0.55) !important;
+}
+.pf-c-alert.pf-m-danger .pf-c-alert__title,
+.alert-danger * {
+  color: #fecaca !important;
+}
+
+.pf-c-alert.pf-m-warning,
+.alert-warning {
+  border-color: rgba(245, 158, 11, 0.55) !important;
+}
+.pf-c-alert.pf-m-warning .pf-c-alert__title,
+.alert-warning * {
+  color: #fde68a !important;
+}
+
+.pf-c-alert.pf-m-info,
+.alert-info {
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
+.pf-c-alert.pf-m-info .pf-c-alert__title,
+.alert-info * {
+  color: #bae6fd !important;
+}
+
+/* Helper/instruction text on required-action pages */
+.instruction {
+  color: var(--gryt-muted) !important;
+}
+
+/* Keep the layout compact on wide screens */
+@media (min-width: 768px) {
+  .card-pf {
+    width: 420px !important;
+  }
+}
+

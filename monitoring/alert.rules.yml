@@ -1,0 +1,21 @@
+groups:
+  - name: auth
+    rules:
+      - alert: KeycloakInstanceDown
+        expr: up{job="keycloak"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Keycloak instance down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for 2 minutes."
+
+      - alert: PostgresExporterDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Postgres exporter down"
+          description: "Prometheus cannot scrape postgres-exporter for 2 minutes."
+

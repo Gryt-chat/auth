@@ -1,0 +1,66 @@
+{
+  "realm": "gryt",
+  "enabled": true,
+  "displayName": "Gryt",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "registrationEmailAsUsername": true,
+  "duplicateEmailsAllowed": false,
+  "rememberMe": true,
+  "verifyEmail": true,
+  "loginTheme": "gryt",
+  "emailTheme": "gryt",
+  "smtpServer": {
+    "host": "__GRYT_SMTP_HOST__",
+    "port": "__GRYT_SMTP_PORT__",
+    "from": "__GRYT_SMTP_FROM__",
+    "fromDisplayName": "__GRYT_SMTP_FROM_NAME__",
+    "replyTo": "__GRYT_SMTP_REPLY_TO__",
+    "replyToDisplayName": "__GRYT_SMTP_REPLY_TO_NAME__",
+    "envelopeFrom": "",
+    "starttls": "true",
+    "ssl": "false",
+    "auth": "true",
+    "user": "__GRYT_SMTP_USER__",
+    "password": "__GRYT_SMTP_PASS__",
+    "debug": "false"
+  },
+  "ssoSessionIdleTimeout": 604800,
+  "ssoSessionMaxLifespan": 2592000,
+  "offlineSessionIdleTimeout": 2592000,
+  "offlineSessionMaxLifespan": 7776000,
+  "accessTokenLifespan": 300,
+  "sslRequired": "external",
+  "clients": [
+    {
+      "clientId": "gryt-web",
+      "name": "Gryt Web Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "https://gryt.chat/*",
+        "https://app.gryt.chat/*",
+        "https://gryt.example.com/*",
+        "http://localhost:3666/*",
+        "gryt://auth/callback"
+      ],
+      "webOrigins": [
+        "https://gryt.chat",
+        "https://app.gryt.chat",
+        "https://gryt.example.com",
+        "http://localhost:3666"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ]
+}
+
