@@ -219,9 +219,9 @@ services:
       # DO NOT commit your token; set it via environment or a local .env file.
       GRYT_SMTP_HOST: ${GRYT_SMTP_HOST:-smtp.postmarkapp.com}
       GRYT_SMTP_PORT: ${GRYT_SMTP_PORT:-587}
-      GRYT_SMTP_FROM: ${GRYT_SMTP_FROM:-gryt@gryt.chat}
+      GRYT_SMTP_FROM: ${GRYT_SMTP_FROM:-hello@gryt.chat}
       GRYT_SMTP_FROM_NAME: ${GRYT_SMTP_FROM_NAME:-Gryt Chat}
-      GRYT_SMTP_REPLY_TO: ${GRYT_SMTP_REPLY_TO:-gryt@gryt.chat}
+      GRYT_SMTP_REPLY_TO: ${GRYT_SMTP_REPLY_TO:-hello@gryt.chat}
       GRYT_SMTP_REPLY_TO_NAME: ${GRYT_SMTP_REPLY_TO_NAME:-Gryt Chat}
       # Postmark server token (required for verification emails to work)
       GRYT_SMTP_USER: ${GRYT_SMTP_USER:-}
