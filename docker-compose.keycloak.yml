@@ -80,7 +80,6 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.16.0
     container_name: gryt-auth-postgres-exporter
-    profiles: ["monitoring"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,7 +92,6 @@ services:
   prometheus:
     image: prom/prometheus:v3.5.0
     container_name: gryt-auth-prometheus
-    profiles: ["monitoring"]
     depends_on:
       keycloak:
         condition: service_healthy
@@ -113,7 +111,6 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.28.1
     container_name: gryt-auth-alertmanager
-    profiles: ["monitoring"]
     environment:
       GRYT_SMTP_HOST: ${GRYT_SMTP_HOST:-smtp.postmarkapp.com}
       GRYT_SMTP_PORT: ${GRYT_SMTP_PORT:-587}
