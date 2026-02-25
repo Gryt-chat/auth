@@ -17,9 +17,9 @@ services:
       timeout: 5s
       retries: 10
 
-  keycloak1:
+  keycloak:
     image: quay.io/keycloak/keycloak:26.5.3
-    container_name: gryt-auth-keycloak-1
+    container_name: gryt-auth-keycloak
     dns:
       - 1.1.1.1
       - 8.8.8.8
@@ -29,7 +29,6 @@ services:
       keycloak-import:
         condition: service_completed_successfully
     environment:
-      # Admin user (bootstrap). Change for real deployments.
       KC_BOOTSTRAP_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
 
@@ -41,112 +40,43 @@ services:
       KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
 
       # Hosting / proxy hints (Cloudflare Tunnel terminates TLS at the edge)
-      # IMPORTANT: Use a *full URL* so Keycloak does not reuse the origin port (e.g. :18080)
-      # and always advertises HTTPS for OIDC discovery and links.
       KC_HOSTNAME: ${GRYT_KEYCLOAK_HOSTNAME_URL:-https://auth.gryt.chat}
       KC_HOSTNAME_ADMIN: ${GRYT_KEYCLOAK_HOSTNAME_ADMIN_URL:-https://auth.gryt.chat}
       KC_HOSTNAME_STRICT: "true"
       KC_PROXY_HEADERS: xforwarded
-      # Theme caching should be enabled in production
+
+      # Theme caching (enable in production)
       KC_SPI_THEME_CACHE_THEMES: ${KC_SPI_THEME_CACHE_THEMES:-true}
       KC_SPI_THEME_CACHE_TEMPLATES: ${KC_SPI_THEME_CACHE_TEMPLATES:-true}
 
-      # Optional: make server endpoints happier behind a proxy
+      # HTTP
       KC_HTTP_ENABLED: "true"
       KC_HTTP_PORT: "8080"
+
       # Observability
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KC_HTTP_MANAGEMENT_PORT: "9000"
       KC_HTTP_MANAGEMENT_SCHEME: "http"
       KC_HTTP_ACCESS_LOG_ENABLED: "true"
+      KC_FEATURES: user-event-metrics
+      KC_EVENT_METRICS_USER_ENABLED: "true"
     command:
       - start
-      # Realm import is handled by keycloak-import service (set GRYT_IMPORT_REALM=1 to enable).
-    volumes:
-      - ./themes:/opt/keycloak/themes:ro
-    networks:
-      - gryt-auth-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-
-  keycloak2:
-    image: quay.io/keycloak/keycloak:26.5.3
-    container_name: gryt-auth-keycloak-2
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak-import:
-        condition: service_completed_successfully
-    environment:
-      # Admin user (bootstrap). Change for real deployments.
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
-
-      # Database
-      KC_DB: postgres
-      KC_DB_URL_HOST: postgres
-      KC_DB_URL_DATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
-      KC_DB_USERNAME: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
-      KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
-
-      # Hosting / proxy hints (Cloudflare Tunnel terminates TLS at the edge)
-      # IMPORTANT: Use a *full URL* so Keycloak does not reuse the origin port (e.g. :18080)
-      # and always advertises HTTPS for OIDC discovery and links.
-      KC_HOSTNAME: ${GRYT_KEYCLOAK_HOSTNAME_URL:-https://auth.gryt.chat}
-      KC_HOSTNAME_ADMIN: ${GRYT_KEYCLOAK_HOSTNAME_ADMIN_URL:-https://auth.gryt.chat}
-      KC_HOSTNAME_STRICT: "true"
-      KC_PROXY_HEADERS: xforwarded
-      # Theme caching should be enabled in production
-      KC_SPI_THEME_CACHE_THEMES: ${KC_SPI_THEME_CACHE_THEMES:-true}
-      KC_SPI_THEME_CACHE_TEMPLATES: ${KC_SPI_THEME_CACHE_TEMPLATES:-true}
-
-      # Optional: make server endpoints happier behind a proxy
-      KC_HTTP_ENABLED: "true"
-      KC_HTTP_PORT: "8080"
-      # Observability
-      KC_HEALTH_ENABLED: "true"
-      KC_METRICS_ENABLED: "true"
-      KC_HTTP_MANAGEMENT_PORT: "9000"
-      KC_HTTP_MANAGEMENT_SCHEME: "http"
-      KC_HTTP_ACCESS_LOG_ENABLED: "true"
-    command:
-      - start
-    volumes:
-      - ./themes:/opt/keycloak/themes:ro
-    networks:
-      - gryt-auth-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-
-  proxy:
-    image: haproxy:2.9-alpine
-    container_name: gryt-auth-proxy
-    depends_on:
-      keycloak1:
-        condition: service_healthy
-      keycloak2:
-        condition: service_healthy
     ports:
-      # Bind to LAN by default so cloudflared can reach it via 192.168.x.x
-      # Example: GRYT_KEYCLOAK_BIND=127.0.0.1 GRYT_KEYCLOAK_PORT=18080 docker compose -f auth/docker-compose.keycloak.yml up
       - "${GRYT_KEYCLOAK_BIND:-0.0.0.0}:${GRYT_KEYCLOAK_PORT:-18080}:8080"
+      - "127.0.0.1:9000:9000"
     volumes:
-      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./themes:/opt/keycloak/themes:ro
     networks:
       - gryt-auth-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.16.0
@@ -166,9 +96,7 @@ services:
     container_name: gryt-auth-prometheus
     profiles: ["monitoring"]
     depends_on:
-      keycloak1:
-        condition: service_healthy
-      keycloak2:
+      keycloak:
         condition: service_healthy
       postgres-exporter:
         condition: service_started
