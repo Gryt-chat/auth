@@ -111,13 +111,13 @@ def main() -> None:
     desired_redirects = split_csv(
         env(
             "KEYCLOAK_VALID_REDIRECT_URIS",
-            "https://gryt.chat/*,https://app.gryt.chat/*,https://beta.gryt.chat/*,https://gryt.example.com/*,http://localhost:3666/*,http://localhost:3667/*,gryt://auth/callback",
+            "https://gryt.chat/*,https://app.gryt.chat/*,https://beta.gryt.chat/*,https://gryt.example.com/*,http://localhost:3666/*,http://localhost:3667/*,http://127.0.0.1:15738/*,gryt://auth/callback",
         )
     )
     desired_origins = split_csv(
         env(
             "KEYCLOAK_WEB_ORIGINS",
-            "https://gryt.chat,https://app.gryt.chat,https://beta.gryt.chat,https://gryt.example.com,http://localhost:3666,http://localhost:3667",
+            "https://gryt.chat,https://app.gryt.chat,https://beta.gryt.chat,https://gryt.example.com,http://localhost:3666,http://localhost:3667,http://127.0.0.1:15738",
         )
     )
 
