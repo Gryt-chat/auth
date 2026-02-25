@@ -114,12 +114,30 @@ services:
     image: prom/alertmanager:v0.28.1
     container_name: gryt-auth-alertmanager
     profiles: ["monitoring"]
+    environment:
+      GRYT_SMTP_HOST: ${GRYT_SMTP_HOST:-smtp.postmarkapp.com}
+      GRYT_SMTP_PORT: ${GRYT_SMTP_PORT:-587}
+      GRYT_SMTP_FROM: ${GRYT_SMTP_FROM:-hello@gryt.chat}
+      GRYT_SMTP_USER: ${GRYT_SMTP_USER:-}
+      GRYT_SMTP_PASS: ${GRYT_SMTP_PASS:-}
+      GRYT_ALERT_EMAIL: ${GRYT_ALERT_EMAIL:-hello@gryt.chat}
     ports:
       - "127.0.0.1:${GRYT_ALERTMANAGER_PORT:-19093}:9093"
     volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml.tpl:ro
+    entrypoint: ["/bin/sh", "-c"]
     command:
-      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - |
+        cp /etc/alertmanager/alertmanager.yml.tpl /tmp/alertmanager.yml
+        sed -i \
+          -e "s|__GRYT_SMTP_HOST__|$$GRYT_SMTP_HOST|g" \
+          -e "s|__GRYT_SMTP_PORT__|$$GRYT_SMTP_PORT|g" \
+          -e "s|__GRYT_SMTP_FROM__|$$GRYT_SMTP_FROM|g" \
+          -e "s|__GRYT_SMTP_USER__|$$GRYT_SMTP_USER|g" \
+          -e "s|__GRYT_SMTP_PASS__|$$GRYT_SMTP_PASS|g" \
+          -e "s|__GRYT_ALERT_EMAIL__|$$GRYT_ALERT_EMAIL|g" \
+          /tmp/alertmanager.yml
+        exec /bin/alertmanager --config.file=/tmp/alertmanager.yml
     networks:
       - gryt-auth-network
     restart: unless-stopped
