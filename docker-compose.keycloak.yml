@@ -108,6 +108,25 @@ services:
       - gryt-auth-network
     restart: unless-stopped
 
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: gryt-auth-grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRYT_GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRYT_GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:${GRYT_GRAFANA_PORT:-13000}:3000"
+    volumes:
+      - gryt-auth-grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
   alertmanager:
     image: prom/alertmanager:v0.28.1
     container_name: gryt-auth-alertmanager
@@ -182,4 +201,5 @@ networks:
 
 volumes:
   gryt-auth-postgres-data:
+  gryt-auth-grafana-data:
 
