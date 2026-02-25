@@ -65,7 +65,6 @@ services:
       - start
     ports:
       - "${GRYT_KEYCLOAK_BIND:-0.0.0.0}:${GRYT_KEYCLOAK_PORT:-18080}:8080"
-      - "127.0.0.1:9000:9000"
     volumes:
       - ./themes:/opt/keycloak/themes:ro
     networks:
