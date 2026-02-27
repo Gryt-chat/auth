@@ -2,7 +2,7 @@
   "realm": "gryt",
   "enabled": true,
   "displayName": "Gryt",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "resetPasswordAllowed": true,
   "loginWithEmailAllowed": true,
   "registrationEmailAsUsername": true,
