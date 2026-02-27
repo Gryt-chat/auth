@@ -141,8 +141,8 @@
       wrapper.appendChild(label);
       wrapper.appendChild(errorMsg);
 
-      var btnGroup = submitBtn.closest(".pf-c-form__group") || submitBtn.parentElement;
-      btnGroup.parentElement.insertBefore(wrapper, btnGroup);
+      var formGroup = submitBtn.closest(".form-group") || submitBtn.closest(".pf-c-form__group") || submitBtn.parentElement;
+      formGroup.parentElement.insertBefore(wrapper, formGroup);
 
       registerForm.addEventListener("submit", function (e) {
         if (!checkbox.checked) {

@@ -32,6 +32,88 @@
   "offlineSessionMaxLifespan": 7776000,
   "accessTokenLifespan": 300,
   "sslRequired": "external",
+
+  "webAuthnPolicyPasswordlessRpEntityName": "Gryt",
+  "webAuthnPolicyPasswordlessRpId": "",
+  "webAuthnPolicyPasswordlessSignatureAlgorithms": ["ES256"],
+  "webAuthnPolicyPasswordlessAttestationConveyancePreference": "not specified",
+  "webAuthnPolicyPasswordlessAuthenticatorAttachment": "not specified",
+  "webAuthnPolicyPasswordlessRequireResidentKey": "Yes",
+  "webAuthnPolicyPasswordlessUserVerificationRequirement": "required",
+  "webAuthnPolicyPasswordlessCreateTimeout": 0,
+  "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister": true,
+  "webAuthnPolicyPasswordlessAcceptableAaguids": [],
+
+  "browserFlow": "gryt browser",
+
+  "authenticationFlows": [
+    {
+      "alias": "gryt browser",
+      "description": "Browser-based authentication with passkey support",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "identity-provider-redirector",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "webauthn-authenticator-passwordless",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "ALTERNATIVE",
+          "priority": 40,
+          "flowAlias": "gryt browser forms",
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "alias": "gryt browser forms",
+      "description": "Username and password form",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-username-password-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ],
+
+  "requiredActions": [
+    {
+      "alias": "webauthn-register-passwordless",
+      "name": "Webauthn Register Passwordless",
+      "providerId": "webauthn-register-passwordless",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 70,
+      "config": {}
+    }
+  ],
+
   "clients": [
     {
       "clientId": "gryt-web",

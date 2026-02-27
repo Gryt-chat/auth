@@ -1,0 +1,12 @@
+.env
+.env.*
+.git
+.gitignore
+node_modules
+dist
+bun.lockb
+*.log
+*.md
+LICENSE
+.vscode/
+.idea/

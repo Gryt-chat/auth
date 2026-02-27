@@ -198,7 +198,7 @@ services:
 
   identity:
     build:
-      context: ../identity
+      context: ./identity
       dockerfile: Dockerfile
     container_name: gryt-identity
     depends_on:

@@ -21,6 +21,7 @@ Gryt uses a single auth service at **auth.gryt.chat**. All users authenticate th
 | Component | Description |
 |-----------|-------------|
 | **Keycloak** | Identity provider with custom Gryt realm and themes |
+| **Identity** | Certificate authority that binds Keycloak identities to client public keys ([details](identity/README.md)) |
 | **HAProxy** | Reverse proxy for production TLS termination |
 | **Bootstrap** | Python scripts for automated Keycloak client configuration |
 | **Ops** | Backup/restore tooling for the Postgres database |

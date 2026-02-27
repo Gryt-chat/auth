@@ -239,6 +239,7 @@ button[data-password-toggle] {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
+  width: 100%;
   margin: 16px 0 8px;
   font-size: 13px;
   line-height: 1.5;
