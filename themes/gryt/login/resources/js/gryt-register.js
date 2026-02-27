@@ -115,6 +115,49 @@
     emailInput.addEventListener("input", sync);
     emailInput.addEventListener("change", sync);
     sync();
+
+    // Terms acceptance checkbox
+    var submitBtn = registerForm.querySelector('input[type="submit"]');
+    if (submitBtn && !document.getElementById("gryt-terms-checkbox")) {
+      var wrapper = document.createElement("div");
+      wrapper.className = "gryt-terms-group";
+
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = "gryt-terms-checkbox";
+      checkbox.name = "gryt-terms-accepted";
+
+      var label = document.createElement("label");
+      label.setAttribute("for", "gryt-terms-checkbox");
+      label.innerHTML =
+        'I agree to the <a href="https://gryt.chat/terms" target="_blank" rel="noreferrer">Terms of Use</a> ' +
+        'and <a href="https://gryt.chat/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>';
+
+      var errorMsg = document.createElement("div");
+      errorMsg.className = "gryt-terms-error";
+      errorMsg.textContent = "You must accept the Terms of Use to continue.";
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(label);
+      wrapper.appendChild(errorMsg);
+
+      var btnGroup = submitBtn.closest(".pf-c-form__group") || submitBtn.parentElement;
+      btnGroup.parentElement.insertBefore(wrapper, btnGroup);
+
+      registerForm.addEventListener("submit", function (e) {
+        if (!checkbox.checked) {
+          e.preventDefault();
+          wrapper.classList.add("gryt-terms-error-visible");
+          checkbox.focus();
+        }
+      });
+
+      checkbox.addEventListener("change", function () {
+        if (checkbox.checked) {
+          wrapper.classList.remove("gryt-terms-error-visible");
+        }
+      });
+    }
   }
 
   if (document.readyState === "loading") {
