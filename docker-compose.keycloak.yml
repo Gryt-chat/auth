@@ -48,6 +48,7 @@ services:
       # Theme caching (enable in production)
       KC_SPI_THEME_CACHE_THEMES: ${KC_SPI_THEME_CACHE_THEMES:-true}
       KC_SPI_THEME_CACHE_TEMPLATES: ${KC_SPI_THEME_CACHE_TEMPLATES:-true}
+      KC_SPI_THEME_STATIC_MAX_AGE: "-1"
 
       # HTTP
       KC_HTTP_ENABLED: "true"
@@ -195,6 +196,35 @@ services:
       - gryt-auth-network
     restart: "no"
 
+  identity:
+    build:
+      context: ../identity
+      dockerfile: Dockerfile
+    container_name: gryt-identity
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      PORT: "3000"
+      GRYT_OIDC_ISSUER: ${GRYT_OIDC_ISSUER:-https://auth.gryt.chat/realms/gryt}
+      GRYT_IDENTITY_ORIGIN: ${GRYT_IDENTITY_ORIGIN:-https://id.gryt.chat}
+      GRYT_CA_PRIVATE_KEY_FILE: ${GRYT_CA_PRIVATE_KEY_FILE:-}
+      GRYT_IDENTITY_DATA_DIR: /app/data
+      GRYT_CERT_LIFETIME_DAYS: ${GRYT_CERT_LIFETIME_DAYS:-30}
+    ports:
+      - "${GRYT_IDENTITY_BIND:-0.0.0.0}:${GRYT_IDENTITY_PORT:-18081}:3000"
+    volumes:
+      - gryt-identity-data:/app/data
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
 networks:
   gryt-auth-network:
     driver: bridge
@@ -202,4 +232,5 @@ networks:
 volumes:
   gryt-auth-postgres-data:
   gryt-auth-grafana-data:
+  gryt-identity-data:
 
