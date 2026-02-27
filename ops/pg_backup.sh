@@ -16,8 +16,19 @@ fi
 
 db="${GRYT_AUTH_POSTGRES_DB:-keycloak}"
 user="${GRYT_AUTH_POSTGRES_USER:-keycloak}"
+retain_days="${GRYT_BACKUP_RETAIN_DAYS:-30}"
 
 echo "[pg_backup] Writing ${out}"
- "${compose[@]}" exec -T postgres sh -lc "pg_dump -U \"${user}\" -d \"${db}\"" | gzip -c > "${out}"
-echo "[pg_backup] Done"
+"${compose[@]}" exec -T postgres sh -lc "pg_dump -U \"${user}\" -d \"${db}\"" | gzip -c > "${out}"
+echo "[pg_backup] Done ($(du -h "${out}" | cut -f1))"
 
+pruned=0
+while IFS= read -r -d '' f; do
+  rm -f "${f}"
+  echo "[pg_backup] Pruned ${f}"
+  ((pruned++)) || true
+done < <(find "${AUTH_DIR}/backups" -name 'keycloak-*.sql.gz' -mtime +"${retain_days}" -print0)
+
+if (( pruned > 0 )); then
+  echo "[pg_backup] Pruned ${pruned} backup(s) older than ${retain_days} days"
+fi

@@ -159,15 +159,53 @@ services:
       - gryt-auth-network
     restart: unless-stopped
 
+  # Automatic pre-import backup.
+  # Only runs when GRYT_IMPORT_REALM=1; writes a timestamped dump to ./backups/ before
+  # the realm import can touch the database.
+  keycloak-pre-import-backup:
+    image: postgres:16-alpine
+    container_name: gryt-auth-pre-import-backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      PGUSER: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      PGPASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+      GRYT_IMPORT_REALM: ${GRYT_IMPORT_REALM:-0}
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        if [ "$$GRYT_IMPORT_REALM" != "1" ]; then
+          echo "[pre-import-backup] GRYT_IMPORT_REALM!=1, skipping."
+          exit 0
+        fi
+        ts=$$(date -u +%Y%m%dT%H%M%SZ)
+        out="/backups/keycloak-pre-import-$${ts}.sql.gz"
+        echo "[pre-import-backup] Backing up before realm import: $${out}"
+        pg_dump | gzip > "$${out}"
+        size=$$(du -h "$${out}" | cut -f1)
+        echo "[pre-import-backup] Done ($${size})"
+    volumes:
+      - ./backups:/backups
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
   # Deterministic config-as-code for dev/testing:
   # Import the realm JSON into the DB (overriding existing config) BEFORE Keycloak starts.
   # This avoids needing an admin login for automation (which can fail if the admin user is disabled/locked).
+  # WARNING: --override true uses OVERWRITE_EXISTING, which DELETES the realm before re-creating it.
+  # All users/sessions are lost. A backup is taken automatically (see keycloak-pre-import-backup).
   keycloak-import:
     image: quay.io/keycloak/keycloak:26.5.3
     container_name: gryt-auth-keycloak-import
     depends_on:
       postgres:
         condition: service_healthy
+      keycloak-pre-import-backup:
+        condition: service_completed_successfully
     environment:
       # Database (same as keycloak)
       KC_DB: postgres
@@ -224,6 +262,46 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Scheduled Postgres backups (every 6 hours, retain 30 days).
+  # Runs one backup immediately on start, then cron takes over.
+  pg-backup:
+    image: postgres:16-alpine
+    container_name: gryt-auth-pg-backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      PGUSER: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      PGPASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+      BACKUP_RETAIN_DAYS: ${GRYT_BACKUP_RETAIN_DAYS:-30}
+      BACKUP_CRON: ${GRYT_BACKUP_CRON:-0 */6 * * *}
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        cat > /usr/local/bin/pg-backup.sh << 'SCRIPT'
+        #!/bin/sh
+        set -eu
+        ts=$$(date -u +%Y%m%dT%H%M%SZ)
+        out="/backups/keycloak-$${ts}.sql.gz"
+        echo "[pg-backup] $$(date -u +%FT%TZ) Creating $${out}"
+        pg_dump | gzip > "$${out}"
+        echo "[pg-backup] Done ($$(du -h "$${out}" | cut -f1))"
+        find /backups -name 'keycloak-*.sql.gz' -mtime +"$${BACKUP_RETAIN_DAYS}" -delete -print \
+          | while read f; do echo "[pg-backup] Pruned $${f}"; done
+        SCRIPT
+        chmod +x /usr/local/bin/pg-backup.sh
+        /usr/local/bin/pg-backup.sh
+        echo "$${BACKUP_CRON} /usr/local/bin/pg-backup.sh >> /proc/1/fd/1 2>&1" | crontab -
+        echo "[pg-backup] Scheduled ($${BACKUP_CRON}). Waiting..."
+        exec crond -f -l 6
+    volumes:
+      - ./backups:/backups
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
 
 networks:
   gryt-auth-network:
