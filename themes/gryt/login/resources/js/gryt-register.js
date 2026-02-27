@@ -117,7 +117,7 @@
     sync();
 
     // Terms acceptance checkbox
-    var submitBtn = registerForm.querySelector('input[type="submit"]');
+    var submitBtn = registerForm.querySelector('input[type="submit"], button[type="submit"]');
     if (submitBtn && !document.getElementById("gryt-terms-checkbox")) {
       var wrapper = document.createElement("div");
       wrapper.className = "gryt-terms-group";
