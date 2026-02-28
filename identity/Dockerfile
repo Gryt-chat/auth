@@ -1,18 +1,18 @@
-FROM oven/bun:1-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-COPY package.json bun.lockb* ./
-RUN bun install
+COPY package.json yarn.lock ./
+RUN yarn install --ignore-engines
 
 COPY . .
-RUN bun run build
+RUN yarn build
 
-FROM oven/bun:1-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json bun.lockb* ./
-RUN bun install --production
+COPY package.json yarn.lock ./
+RUN yarn install --production --ignore-engines
 
-FROM oven/bun:1-alpine
+FROM node:22-alpine
 
 RUN addgroup -g 1001 -S gryt \
   && adduser -S gryt -u 1001 -G gryt -h /app -s /sbin/nologin
@@ -32,4 +32,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["bun", "dist/index.js"]
+CMD ["node", "dist/index.js"]

@@ -44,6 +44,6 @@ Servers and other clients verify these certificates against the public JWKS endp
 
 ## Stack
 
-- [Bun](https://bun.sh) runtime
+- [Node.js](https://nodejs.org) 22+
 - [Hono](https://hono.dev) web framework
 - [jose](https://github.com/panva/jose) for JWT/JWK operations
