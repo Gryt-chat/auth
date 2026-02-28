@@ -2,23 +2,23 @@ import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import { exportJWK, generateKeyPair, importPKCS8, type KeyLike } from "jose";
+import { exportJWK, generateKeyPair, importPKCS8, type JWK } from "jose";
 
 const ALG = "ES256";
 
-let cachedPrivateKey: KeyLike | null = null;
-let cachedPublicJwk: JsonWebKey | null = null;
+let cachedPrivateKey: CryptoKey | null = null;
+let cachedPublicJwk: JWK | null = null;
 let cachedKid: string | null = null;
 
-function deriveKid(jwk: JsonWebKey): string {
+function deriveKid(jwk: JWK): string {
   const material = `${jwk.crv}:${jwk.x}:${jwk.y}`;
   const hash = createHash("sha256").update(material).digest("hex");
   return hash.slice(0, 16);
 }
 
 async function loadOrGenerateKey(): Promise<{
-  privateKey: KeyLike;
-  publicJwk: JsonWebKey;
+  privateKey: CryptoKey;
+  publicJwk: JWK;
   kid: string;
 }> {
   if (cachedPrivateKey && cachedPublicJwk && cachedKid) {
@@ -35,10 +35,11 @@ async function loadOrGenerateKey(): Promise<{
       const kid = deriveKid(jwk);
       const { d: _, ...publicJwk } = jwk;
 
+      const pub: JWK = { ...publicJwk, alg: ALG, use: "sig", kid };
       cachedPrivateKey = privateKey;
-      cachedPublicJwk = { ...publicJwk, alg: ALG, use: "sig", kid };
+      cachedPublicJwk = pub;
       cachedKid = kid;
-      return { privateKey, publicJwk: cachedPublicJwk, kid };
+      return { privateKey, publicJwk: pub, kid };
     } catch (e) {
       console.error(`Failed to load CA key from ${keyPath}, generating new keypair:`, e);
     }
@@ -54,11 +55,12 @@ async function loadOrGenerateKey(): Promise<{
     const kid = deriveKid(jwk);
     const { d: _, ...publicJwk } = jwk;
 
+    const pub: JWK = { ...publicJwk, alg: ALG, use: "sig", kid };
     cachedPrivateKey = privateKey;
-    cachedPublicJwk = { ...publicJwk, alg: ALG, use: "sig", kid };
+    cachedPublicJwk = pub;
     cachedKid = kid;
     console.log(`Loaded existing CA key from ${autoKeyPath}`);
-    return { privateKey, publicJwk: cachedPublicJwk, kid };
+    return { privateKey, publicJwk: pub, kid };
   } catch {
     // Key doesn't exist yet, generate one
   }
@@ -80,21 +82,22 @@ async function loadOrGenerateKey(): Promise<{
   await writeFile(autoKeyPath, pem, { mode: 0o600 });
   console.log(`Saved new CA key to ${autoKeyPath}`);
 
+  const pub: JWK = { ...pubJwk, alg: ALG, use: "sig", kid };
   cachedPrivateKey = privateKey;
-  cachedPublicJwk = { ...pubJwk, alg: ALG, use: "sig", kid };
+  cachedPublicJwk = pub;
   cachedKid = kid;
 
-  return { privateKey, publicJwk: cachedPublicJwk, kid };
+  return { privateKey, publicJwk: pub, kid };
 }
 
-export async function getCAPrivateKey(): Promise<KeyLike> {
+export async function getCAPrivateKey(): Promise<CryptoKey> {
   const { privateKey } = await loadOrGenerateKey();
   return privateKey;
 }
 
-export async function getCAPublicJwk(): Promise<JsonWebKey & { kid: string }> {
+export async function getCAPublicJwk(): Promise<JWK & { kid: string }> {
   const { publicJwk, kid } = await loadOrGenerateKey();
-  return { ...publicJwk, kid } as JsonWebKey & { kid: string };
+  return { ...publicJwk, kid } as JWK & { kid: string };
 }
 
 export async function getCAKid(): Promise<string> {
