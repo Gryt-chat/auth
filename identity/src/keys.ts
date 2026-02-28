@@ -1,6 +1,8 @@
-import { exportJWK, generateKeyPair, importPKCS8, type KeyLike } from "jose";
+import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+
+import { exportJWK, generateKeyPair, importPKCS8, type KeyLike } from "jose";
 
 const ALG = "ES256";
 
@@ -10,7 +12,7 @@ let cachedKid: string | null = null;
 
 function deriveKid(jwk: JsonWebKey): string {
   const material = `${jwk.crv}:${jwk.x}:${jwk.y}`;
-  const hash = Bun.hash(material).toString(16);
+  const hash = createHash("sha256").update(material).digest("hex");
   return hash.slice(0, 16);
 }
 
