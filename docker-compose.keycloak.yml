@@ -119,8 +119,12 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRYT_GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRYT_GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SERVER_ROOT_URL: ${GRYT_GRAFANA_ROOT_URL:-https://monitoring.gryt.chat}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/auth-overview.json
     ports:
-      - "127.0.0.1:${GRYT_GRAFANA_PORT:-13000}:3000"
+      - "${GRYT_GRAFANA_BIND:-0.0.0.0}:${GRYT_GRAFANA_PORT:-13000}:3000"
     volumes:
       - gryt-auth-grafana-data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro

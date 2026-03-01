@@ -1,0 +1,247 @@
+{
+  "uid": "gryt-auth-overview",
+  "title": "Gryt Auth Overview",
+  "tags": ["gryt", "keycloak", "postgres"],
+  "timezone": "browser",
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "realm",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "query": "label_values(keycloak_user_events_total, realm)",
+        "refresh": 2,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Keycloak — Traffic",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Keycloak Up",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "up{job=\"keycloak\"}", "legendFormat": "" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "red" }, { "value": 1, "color": "green" }] }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Logins (24h)",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 1 },
+      "targets": [
+        { "expr": "sum(increase(keycloak_user_events_total{event=\"login\", error=\"\", realm=~\"$realm\"}[24h]))", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Failed Logins (24h)",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 1 },
+      "targets": [
+        { "expr": "sum(increase(keycloak_user_events_total{event=\"login\", error!=\"\", realm=~\"$realm\"}[24h]))", "legendFormat": "" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 10, "color": "yellow" }, { "value": 50, "color": "red" }] },
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Registrations (24h)",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 1 },
+      "targets": [
+        { "expr": "sum(increase(keycloak_user_events_total{event=\"register\", error=\"\", realm=~\"$realm\"}[24h]))", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Uptime",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "process_uptime_seconds{job=\"keycloak\"}", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Logins vs Failed Logins",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [
+        { "expr": "sum(rate(keycloak_user_events_total{event=\"login\", error=\"\", realm=~\"$realm\"}[5m])) * 60", "legendFormat": "Successful logins/min" },
+        { "expr": "sum(rate(keycloak_user_events_total{event=\"login\", error!=\"\", realm=~\"$realm\"}[5m])) * 60", "legendFormat": "Failed logins/min" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 15, "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Failed logins/min" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Successful logins/min" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "User Events by Type",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [
+        { "expr": "sum by (event) (rate(keycloak_user_events_total{error=\"\", realm=~\"$realm\"}[5m])) * 60", "legendFormat": "{{ event }}" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "lineWidth": 2, "stacking": { "mode": "normal" } } }
+      },
+      "options": { "legend": { "displayMode": "table", "calcs": ["sum"], "placement": "bottom" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Login Errors by Reason",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        { "expr": "sum by (error) (rate(keycloak_user_events_total{error!=\"\", realm=~\"$realm\"}[5m])) * 60", "legendFormat": "{{ error }}" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 15, "lineWidth": 2, "stacking": { "mode": "normal" } } }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Keycloak HTTP Request Rate",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"keycloak\"}[5m]))", "legendFormat": "req/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "row",
+      "title": "Keycloak — JVM",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Heap Memory",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        { "expr": "sum(jvm_memory_used_bytes{job=\"keycloak\", area=\"heap\"})", "legendFormat": "Used" },
+        { "expr": "sum(jvm_memory_committed_bytes{job=\"keycloak\", area=\"heap\"})", "legendFormat": "Committed" },
+        { "expr": "sum(jvm_memory_max_bytes{job=\"keycloak\", area=\"heap\"})", "legendFormat": "Max" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Max" }, "properties": [{ "id": "custom.lineStyle", "value": { "fill": "dash" } }] }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Threads",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+      "targets": [
+        { "expr": "jvm_threads_live_threads{job=\"keycloak\"}", "legendFormat": "Live" },
+        { "expr": "jvm_threads_daemon_threads{job=\"keycloak\"}", "legendFormat": "Daemon" },
+        { "expr": "jvm_threads_peak_threads{job=\"keycloak\"}", "legendFormat": "Peak" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "row",
+      "title": "Postgres",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Postgres Up",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 31 },
+      "targets": [
+        { "expr": "pg_up{job=\"postgres\"}", "legendFormat": "" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "red" }, { "value": 1, "color": "green" }] }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Active Connections",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 31 },
+      "targets": [
+        { "expr": "sum(pg_stat_activity_count{job=\"postgres\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "stat",
+      "title": "Database Size",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 31 },
+      "targets": [
+        { "expr": "pg_database_size_bytes{datname=\"keycloak\", job=\"postgres\"}", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Postgres Connections",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "targets": [
+        { "expr": "sum by (state) (pg_stat_activity_count{job=\"postgres\"})", "legendFormat": "{{ state }}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "fillOpacity": 15, "lineWidth": 2, "stacking": { "mode": "normal" } } } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Postgres Rows Activity",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "targets": [
+        { "expr": "rate(pg_stat_database_tup_fetched{datname=\"keycloak\", job=\"postgres\"}[5m])", "legendFormat": "Fetched" },
+        { "expr": "rate(pg_stat_database_tup_inserted{datname=\"keycloak\", job=\"postgres\"}[5m])", "legendFormat": "Inserted" },
+        { "expr": "rate(pg_stat_database_tup_updated{datname=\"keycloak\", job=\"postgres\"}[5m])", "legendFormat": "Updated" },
+        { "expr": "rate(pg_stat_database_tup_deleted{datname=\"keycloak\", job=\"postgres\"}[5m])", "legendFormat": "Deleted" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    }
+  ],
+  "schemaVersion": 39
+}
