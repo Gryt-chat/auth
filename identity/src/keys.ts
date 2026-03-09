@@ -30,7 +30,7 @@ async function loadOrGenerateKey(): Promise<{
   if (keyPath) {
     try {
       const pem = await readFile(keyPath, "utf-8");
-      const privateKey = await importPKCS8(pem, ALG);
+      const privateKey = await importPKCS8(pem, ALG, { extractable: true });
       const jwk = await exportJWK(privateKey);
       const kid = deriveKid(jwk);
       const { d: _, ...publicJwk } = jwk;
@@ -50,7 +50,7 @@ async function loadOrGenerateKey(): Promise<{
 
   try {
     const pem = await readFile(autoKeyPath, "utf-8");
-    const privateKey = await importPKCS8(pem, ALG);
+    const privateKey = await importPKCS8(pem, ALG, { extractable: true });
     const jwk = await exportJWK(privateKey);
     const kid = deriveKid(jwk);
     const { d: _, ...publicJwk } = jwk;
@@ -61,8 +61,8 @@ async function loadOrGenerateKey(): Promise<{
     cachedKid = kid;
     console.log(`Loaded existing CA key from ${autoKeyPath}`);
     return { privateKey, publicJwk: pub, kid };
-  } catch {
-    // Key doesn't exist yet, generate one
+  } catch (e) {
+    console.warn(`Failed to load CA key from ${autoKeyPath}:`, e);
   }
 
   console.log("Generating new ECDSA P-256 CA keypair...");
