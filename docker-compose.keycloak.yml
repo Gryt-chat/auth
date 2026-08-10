@@ -78,6 +78,28 @@ services:
       retries: 5
       start_period: 60s
 
+  # Catches every email the realm sends, so verification and reset flows can be
+  # exercised locally without a mail provider or a real inbox. Mailpit rather
+  # than MailHog: MailHog has been unmaintained since 2020, and this is a
+  # drop-in with the same job.
+  #
+  # Deliberately has no profile guard — it is harmless when nothing sends mail,
+  # and the alternative is a developer wondering where the verification email
+  # went.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: gryt-auth-mailpit
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      # 18025 is the web inbox, 11025 the SMTP port the realm is pointed at.
+      - "${GRYT_MAILPIT_BIND:-127.0.0.1}:${GRYT_MAILPIT_UI_PORT:-18025}:8025"
+      - "${GRYT_MAILPIT_BIND:-127.0.0.1}:${GRYT_MAILPIT_SMTP_PORT:-11025}:1025"
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.16.0
     container_name: gryt-auth-postgres-exporter
