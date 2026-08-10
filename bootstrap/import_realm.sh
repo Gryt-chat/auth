@@ -6,12 +6,17 @@ if [[ "${GRYT_IMPORT_REALM:-0}" != "1" ]]; then
   exit 0
 fi
 
+# Warn rather than refuse.
+#
+# A realm without working SMTP cannot send a verification or reset email, which
+# matters in production and does not matter at all locally — and requiring a
+# Postmark token to bring a development realm up meant the only way to try this
+# stack was to hold a production credential. The placeholders below still get
+# substituted, just with empty values.
 if [[ -z "${GRYT_SMTP_USER:-}" || -z "${GRYT_SMTP_PASS:-}" ]]; then
-  echo "[keycloak-import] ERROR: GRYT_SMTP_USER / GRYT_SMTP_PASS not set."
-  echo "[keycloak-import] Create auth/.env with:"
-  echo "[keycloak-import]   GRYT_SMTP_USER=postmark_server_token"
-  echo "[keycloak-import]   GRYT_SMTP_PASS=postmark_server_token"
-  exit 1
+  echo "[keycloak-import] WARNING: GRYT_SMTP_USER / GRYT_SMTP_PASS not set."
+  echo "[keycloak-import] Importing without working SMTP — this realm cannot send email."
+  echo "[keycloak-import] For a deployment that needs it, set both in auth/.env."
 fi
 
 tmp="/tmp/gryt-import"
@@ -25,14 +30,14 @@ esc() {
 }
 
 sed -i \
-  -e "s|__GRYT_SMTP_HOST__|$(esc "${GRYT_SMTP_HOST}")|g" \
-  -e "s|__GRYT_SMTP_PORT__|$(esc "${GRYT_SMTP_PORT}")|g" \
-  -e "s|__GRYT_SMTP_FROM__|$(esc "${GRYT_SMTP_FROM}")|g" \
-  -e "s|__GRYT_SMTP_FROM_NAME__|$(esc "${GRYT_SMTP_FROM_NAME}")|g" \
-  -e "s|__GRYT_SMTP_REPLY_TO__|$(esc "${GRYT_SMTP_REPLY_TO}")|g" \
-  -e "s|__GRYT_SMTP_REPLY_TO_NAME__|$(esc "${GRYT_SMTP_REPLY_TO_NAME}")|g" \
-  -e "s|__GRYT_SMTP_USER__|$(esc "${GRYT_SMTP_USER}")|g" \
-  -e "s|__GRYT_SMTP_PASS__|$(esc "${GRYT_SMTP_PASS}")|g" \
+  -e "s|__GRYT_SMTP_HOST__|$(esc "${GRYT_SMTP_HOST:-}")|g" \
+  -e "s|__GRYT_SMTP_PORT__|$(esc "${GRYT_SMTP_PORT:-}")|g" \
+  -e "s|__GRYT_SMTP_FROM__|$(esc "${GRYT_SMTP_FROM:-}")|g" \
+  -e "s|__GRYT_SMTP_FROM_NAME__|$(esc "${GRYT_SMTP_FROM_NAME:-}")|g" \
+  -e "s|__GRYT_SMTP_REPLY_TO__|$(esc "${GRYT_SMTP_REPLY_TO:-}")|g" \
+  -e "s|__GRYT_SMTP_REPLY_TO_NAME__|$(esc "${GRYT_SMTP_REPLY_TO_NAME:-}")|g" \
+  -e "s|__GRYT_SMTP_USER__|$(esc "${GRYT_SMTP_USER:-}")|g" \
+  -e "s|__GRYT_SMTP_PASS__|$(esc "${GRYT_SMTP_PASS:-}")|g" \
   "${tmp}/gryt-realm.json"
 
 if grep -q "__GRYT_SMTP_" "${tmp}/gryt-realm.json"; then
