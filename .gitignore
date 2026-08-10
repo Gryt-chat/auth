@@ -5,3 +5,4 @@ tmp-export/
 backups/*.sql
 backups/*.sql.gz
 backups/*.dump
+identity/data/
