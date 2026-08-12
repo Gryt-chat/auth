@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gryt login theme — pages</title>
+    <style>
+      /* Chrome for the page browser only. Kept here rather than in gryt.css so
+         nothing about this leaks into the theme that ships. */
+      .gryt-dev-bar {
+        position: fixed; z-index: 9999; top: 8px; left: 8px;
+        display: flex; gap: 10px; align-items: center;
+        padding: 6px 10px; border: 1px solid #2c2a3a; border-radius: 8px;
+        background: #0b0a14; color: #ddd;
+        font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .gryt-dev-bar select,
+      .gryt-dev-bar label { font: inherit; color: inherit; }
+      .gryt-dev-bar select { background: #0b0a14; border: 1px solid #2c2a3a; padding: 2px; }
+      .gryt-dev-bar label { display: flex; gap: 4px; align-items: center; opacity: 0.7; }
+      .gryt-dev-failure { padding: 24px; color: tomato; font: 12px ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/dev.tsx"></script>
+  </body>
+</html>

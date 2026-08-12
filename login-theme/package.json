@@ -6,6 +6,8 @@
   "description": "Keycloak login theme for Gryt, built with Keycloakify so it can use @gryt/ui.",
   "scripts": {
     "dev": "vite",
+    "pages": "vite --open /dev.html",
+    "_comment_pages": "Look at every login page locally. `npm run storybook` is keycloakify start-keycloak, which shells out to a Maven build \u2014 this repo builds the theme in Docker so nobody needs Maven, so that script does not work here. This renders the same pages against the mock context the library ships.",
     "_comment_build": "vite only, no tsc gate: the pages under src/login/pages are vendored by @keycloakify/login-ui's postinstall, and some do not pass our strict settings (an unused @ts-expect-error in login-passkeys-conditional-authenticate). Failing the build on generated code we do not own would mean owning files just to silence them. Run `npm run typecheck` to see everything, ours included.",
     "build": "vite build",
     "typecheck": "tsc -b",
