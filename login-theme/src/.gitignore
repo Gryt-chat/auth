@@ -6,8 +6,11 @@
 # login/components/Template/Template.tsx
 # login/pages/login/Form.tsx
 # login/pages/login/Page.tsx
+# login/pages/login-page-expired/Page.tsx
 # login/pages/login-reset-password/Form.tsx
+# login/pages/login-verify-email/Page.tsx
 # login/pages/register/Form.tsx
+# login/pages/select-authenticator/Page.tsx
 # === Owned files end =====
 
 # === @keycloakify/login-ui v250004.7.2 ===
@@ -66,7 +69,6 @@
 /login/pages/login-otp/index.ts
 /login/pages/login-otp/Page.tsx
 /login/pages/login-page-expired/index.ts
-/login/pages/login-page-expired/Page.tsx
 /login/pages/login-passkeys-conditional-authenticate/index.ts
 /login/pages/login-passkeys-conditional-authenticate/Page.tsx
 /login/pages/login-passkeys-conditional-authenticate/useScript.tsx
@@ -90,7 +92,6 @@
 /login/pages/login-username/Page.tsx
 /login/pages/login-username/useScript.tsx
 /login/pages/login-verify-email/index.ts
-/login/pages/login-verify-email/Page.tsx
 /login/pages/login-x509-info/index.ts
 /login/pages/login-x509-info/Page.tsx
 /login/pages/logout-confirm/index.ts
@@ -101,7 +102,6 @@
 /login/pages/saml-post-form/index.ts
 /login/pages/saml-post-form/Page.tsx
 /login/pages/select-authenticator/index.ts
-/login/pages/select-authenticator/Page.tsx
 /login/pages/select-organization/index.ts
 /login/pages/select-organization/Page.tsx
 /login/pages/terms/index.ts

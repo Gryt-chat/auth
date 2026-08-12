@@ -296,6 +296,127 @@
   }
 }
 
+/* ── prose in the form column ────────────────────────────────
+ *
+ * Several pages are a sentence and nothing else — verify your email, the page
+ * expired, an error. Left as a bare <p> they run the full width of the column
+ * at body size, which reads as a wall rather than a line, and they sit hard
+ * against the title because nothing owns the space between them.
+ */
+
+.gryt-auth-prose {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--gryt-muted);
+  /* A measure, not the column width. ~60ch is the readable range and the column
+     is wider than that at every breakpoint above a phone. */
+  max-width: 34rem;
+  text-wrap: pretty;
+}
+
+/* Something the page is about — the address a mail just went to. It is the one
+   thing on the page worth checking for a typo, so it stops being body text. */
+.gryt-auth-highlight {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gryt-text);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* A footnote under the rule — "didn't get it?" — not an instruction. */
+.gryt-auth-note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--gryt-muted);
+  text-wrap: pretty;
+}
+
+/* ── a list of ways in ───────────────────────────────────────
+ *
+ * select-authenticator, and any page offering a choice of credential. These are
+ * options, not actions: the page is asking which door, and every door is equal.
+ * Rendering them as buttons — which they are, because Keycloak posts the choice
+ * — used to mean the submit baseline below painted each one as a filled accent
+ * pill, so a choice of two looked like two primary actions.
+ */
+
+.gryt-auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gryt-auth-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--gryt-border);
+  border-radius: var(--gryt-radius-lg, 0.75rem);
+  background: var(--gryt-surface-raised);
+  color: var(--gryt-text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  transition:
+    border-color 140ms var(--gryt-ease-out, ease),
+    background-color 140ms var(--gryt-ease-out, ease);
+}
+
+.gryt-auth-option:hover {
+  border-color: var(--gryt-accent);
+  background: var(--gryt-surface);
+}
+
+.gryt-auth-option:focus-visible {
+  outline: 2px solid var(--gryt-accent-light, var(--gryt-accent));
+  outline-offset: 2px;
+}
+
+.gryt-auth-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.gryt-auth-option-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gryt-text);
+}
+
+.gryt-auth-option-help {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--gryt-muted);
+  text-wrap: pretty;
+}
+
+.gryt-auth-option-chevron {
+  flex: none;
+  color: var(--gryt-muted);
+}
+
+.gryt-auth-option:hover .gryt-auth-option-chevron {
+  color: var(--gryt-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gryt-auth-option {
+    transition: none;
+  }
+}
+
 /* ── baseline for pages not rebuilt on @gryt/ui ───────────────
  *
  * doUseDefaultCss is false, so Keycloak's own classes resolve to nothing and
@@ -308,14 +429,28 @@
  * unaffected, because those render their own classes and set their own colours.
  */
 
-.gryt-auth-main a {
+/* The same guard the submit rule below carries, and for the same reason.
+ *
+ * `.gryt-auth-main a` is one element and one class, which outranks the utility
+ * classes @gryt/ui renders — so a Button asked to render as an anchor (Base UI's
+ * `render` prop, used wherever an action navigates rather than posts) had its
+ * label repainted accent-on-accent and disappeared into its own fill. It was
+ * still in the DOM, still had its text, and was invisible. */
+.gryt-auth-main a:not([class*="gryt-"]) {
   color: var(--gryt-accent);
   text-decoration: none;
 }
 
-.gryt-auth-main a:hover {
+.gryt-auth-main a:not([class*="gryt-"]):hover {
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+/* Excluding components from the link baseline also excludes them from its
+   `text-decoration: none`, which hands them back the browser's underline. A
+   button that navigates should still look like a button. */
+.gryt-auth-main a[class*="gryt-"] {
+  text-decoration: none;
 }
 
 /* inline-block, not block: UserProfileFormFields renders the required marker
