@@ -45,11 +45,23 @@ exit immediately and are safe to re-run.
 | Service | What it does |
 |---------|--------------|
 | `keycloak-pre-import-backup` | Dumps Postgres to `./backups` before an import can overwrite anything. Only when `GRYT_IMPORT_REALM=1`. |
-| `keycloak-import` | Imports `realm/gryt-realm.json`, substituting SMTP settings. Only when `GRYT_IMPORT_REALM=1`. **`--override true` deletes the realm first — every user in it goes too.** |
+| `keycloak-import` | Imports `realm/gryt-realm.json`, substituting SMTP settings. Only when `GRYT_IMPORT_REALM=1`. **`--override true` deletes the realm first — every user in it goes too.** Refuses to run while Keycloak is up; stop it first. |
 | `keycloak-bootstrap-admin` | Creates the master-realm admin if there isn't one. |
 | `keycloak-user-profile` | Applies `bootstrap/gryt-user-profile.json` through the admin API, once the server is up. |
 
 Two things about this are worth knowing before you change any of it.
+
+**The import is an offline operation.** `kc.sh import` rewrites the database directly, and a
+running Keycloak goes on holding the realm id it started with — so importing underneath one
+leaves it serving 500s until it is restarted, with every user in the realm already gone. It is
+easy to do by accident, because `docker compose up -d` re-runs a one-shot whose config changed
+without restarting `keycloak`, whose own definition did not. `import_realm.sh` checks for a
+listening server and refuses. To import deliberately:
+
+```bash
+docker compose -f docker-compose.keycloak.yml stop keycloak
+docker compose -f docker-compose.keycloak.yml up -d
+```
 
 **The admin is not created by `KC_BOOTSTRAP_ADMIN_*` alone.** Keycloak only does that
 when `start` finds no master realm, and `keycloak-import` creates master as a side

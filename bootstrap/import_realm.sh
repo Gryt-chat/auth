@@ -6,6 +6,47 @@ if [[ "${GRYT_IMPORT_REALM:-0}" != "1" ]]; then
   exit 0
 fi
 
+# Refuse to import into a database a running Keycloak is holding open.
+#
+# `kc.sh import --override true` deletes the realm and recreates it. That is the
+# documented behaviour and there is a backup taken first, but it is an *offline*
+# operation: the running server keeps the old realm id in memory, so every
+# request against the realm it was serving fails with
+#
+#   NullPointerException: Cannot invoke RealmModel.getAttribute ... realm is null
+#
+# and stays that way until the container is restarted. Every user in the realm is
+# gone by then too.
+#
+# It is easy to hit by accident, because `docker compose up -d` re-runs this
+# one-shot whenever its config changed while leaving `keycloak` running — the
+# service's own definition did not change, so compose sees no reason to restart
+# it. Measured: a user created a minute earlier was gone, the registration
+# endpoint returned 500, and `.well-known/openid-configuration` still returned
+# 200, so a readiness probe pointed at it reported the server healthy.
+#
+# Refusing rather than stopping Keycloak here: a container that takes auth down
+# for the whole box as a side effect of an env var is worse than an error
+# message, and the two-step is one command.
+# The probe runs in a subshell so the descriptor goes away with it. Closing it
+# here instead would be `exec 3>&-` in a shell that never opened it, and a failed
+# redirection on a special builtin ends the script on the spot — which produced
+# exactly the silent exit 1 this guard exists to replace.
+if (exec 3<>/dev/tcp/keycloak/8080) 2>/dev/null; then
+  echo "[keycloak-import] ERROR: Keycloak is running. Refusing to import." >&2
+  echo "[keycloak-import]" >&2
+  echo "[keycloak-import] The import deletes the realm and recreates it, which a running" >&2
+  echo "[keycloak-import] server cannot survive — it serves 500s until restarted, and every" >&2
+  echo "[keycloak-import] user in the realm is lost." >&2
+  echo "[keycloak-import]" >&2
+  echo "[keycloak-import] Stop it first, then bring the stack up again:" >&2
+  echo "[keycloak-import]   docker compose -f docker-compose.keycloak.yml stop keycloak" >&2
+  echo "[keycloak-import]   docker compose -f docker-compose.keycloak.yml up -d" >&2
+  echo "[keycloak-import]" >&2
+  echo "[keycloak-import] Set GRYT_IMPORT_REALM=0 if you did not mean to import at all." >&2
+  exit 1
+fi
+
 # Warn rather than refuse.
 #
 # A realm without working SMTP cannot send a verification or reset email, which
