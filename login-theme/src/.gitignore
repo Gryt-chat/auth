@@ -9,12 +9,18 @@
 # login/pages/info/Page.tsx
 # login/pages/login/Form.tsx
 # login/pages/login/Page.tsx
+# login/pages/login-config-totp/Page.tsx
+# login/pages/login-otp/Page.tsx
 # login/pages/login-page-expired/Page.tsx
 # login/pages/login-reset-password/Form.tsx
 # login/pages/login-update-password/Page.tsx
 # login/pages/login-verify-email/Page.tsx
+# login/pages/logout-confirm/Page.tsx
 # login/pages/register/Form.tsx
 # login/pages/select-authenticator/Page.tsx
+# login/pages/webauthn-authenticate/Page.tsx
+# login/pages/webauthn-error/Page.tsx
+# login/pages/webauthn-register/Page.tsx
 # === Owned files end =====
 
 # === @keycloakify/login-ui v250004.7.2 ===
@@ -56,7 +62,6 @@
 /login/pages/login/SocialProviders.tsx
 /login/pages/login/useScript.tsx
 /login/pages/login-config-totp/index.ts
-/login/pages/login-config-totp/Page.tsx
 /login/pages/login-idp-link-confirm/index.ts
 /login/pages/login-idp-link-confirm/Page.tsx
 /login/pages/login-idp-link-confirm-override/index.ts
@@ -68,7 +73,6 @@
 /login/pages/login-oauth2-device-verify-user-code/index.ts
 /login/pages/login-oauth2-device-verify-user-code/Page.tsx
 /login/pages/login-otp/index.ts
-/login/pages/login-otp/Page.tsx
 /login/pages/login-page-expired/index.ts
 /login/pages/login-passkeys-conditional-authenticate/index.ts
 /login/pages/login-passkeys-conditional-authenticate/Page.tsx
@@ -95,7 +99,6 @@
 /login/pages/login-x509-info/index.ts
 /login/pages/login-x509-info/Page.tsx
 /login/pages/logout-confirm/index.ts
-/login/pages/logout-confirm/Page.tsx
 /login/pages/register/index.ts
 /login/pages/register/Page.tsx
 /login/pages/register/TermsAcceptance.tsx
@@ -109,10 +112,7 @@
 /login/pages/update-email/index.ts
 /login/pages/update-email/Page.tsx
 /login/pages/webauthn-authenticate/index.ts
-/login/pages/webauthn-authenticate/Page.tsx
 /login/pages/webauthn-authenticate/useScript.tsx
 /login/pages/webauthn-error/index.ts
-/login/pages/webauthn-error/Page.tsx
 /login/pages/webauthn-register/index.ts
-/login/pages/webauthn-register/Page.tsx
 /login/pages/webauthn-register/useScript.tsx
