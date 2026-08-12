@@ -54,7 +54,11 @@ export function Page() {
                         className="gryt-auth-credentials"
                     >
                         {credentials.map((otpCredential, index) => (
-                            <label key={index} htmlFor={`kc-otp-credential-${index}`}>
+                            <label
+                                key={index}
+                                className="gryt-auth-credential"
+                                htmlFor={`kc-otp-credential-${index}`}
+                            >
                                 <Radio id={`kc-otp-credential-${index}`} value={otpCredential.id} />
                                 {otpCredential.userLabel}
                             </label>
@@ -63,7 +67,9 @@ export function Page() {
                 )}
 
                 <div className="gryt-auth-otp">
-                    <label htmlFor="otp">{msg("loginOtpOneTime")}</label>
+                    <label className="gryt-auth-otp-label" htmlFor="otp">
+                        {msg("loginOtpOneTime")}
+                    </label>
                     <OtpField id="otp" name="otp" length={6} autoFocus aria-invalid={hasError} />
                     {hasError && (
                         <span

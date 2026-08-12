@@ -67,6 +67,13 @@ function Dev() {
   // locale switcher at all. The mock turns on all thirty, which buries the page
   // title under seven rows of links — worth being able to see, not the default.
   const [oneLocale, setOneLocale] = useState(true);
+  // The library's mock profile collects username, email, firstName, lastName and
+  // locale. The gryt realm collects username and email, renders username never
+  // because registrationEmailAsUsername is set, and dropped the two name fields
+  // in GRYT-180 — so register.ftl on the mock shows two fields nobody will ever
+  // be asked for. Verified against the running local Keycloak, which renders
+  // email, password and password-confirm and nothing else.
+  const [realRealm, setRealRealm] = useState(true);
 
   let kcContext: unknown;
   let failure: string | null = null;
@@ -76,6 +83,27 @@ function Dev() {
     if (oneLocale && ctx.locale && typeof ctx.locale === "object") {
       const locale = ctx.locale as { supported?: unknown[] };
       if (Array.isArray(locale.supported)) locale.supported = locale.supported.slice(0, 1);
+    }
+    if (realRealm) {
+      const realm = ctx.realm as Record<string, unknown> | undefined;
+      if (realm) realm.registrationEmailAsUsername = true;
+      // attributesByName, not attributes — the mock keys them by name and
+      // userProfileApi reads Object.values() off that.
+      const profile = ctx.profile as
+        | { attributesByName?: Record<string, unknown>; attributes?: { name: string }[] }
+        | undefined;
+      // Email only. The realm's profile also declares username, but with
+      // registrationEmailAsUsername set Keycloak omits it from what it sends the
+      // page — which is why the real registration form has no username input.
+      const keep = (name: string) => name === "email";
+      if (profile?.attributesByName) {
+        for (const name of Object.keys(profile.attributesByName)) {
+          if (!keep(name)) delete profile.attributesByName[name];
+        }
+      }
+      if (Array.isArray(profile?.attributes)) {
+        profile.attributes = profile.attributes.filter(a => keep(a.name));
+      }
     }
     kcContext = ctx;
   } catch (e) {
@@ -115,6 +143,15 @@ function Dev() {
             onChange={e => setOneLocale(e.target.checked)}
           />
           one locale
+        </label>
+
+        <label title="Trim the mock's user profile to what the gryt realm actually collects">
+          <input
+            type="checkbox"
+            checked={realRealm}
+            onChange={e => setRealRealm(e.target.checked)}
+          />
+          gryt realm
         </label>
       </div>
 
