@@ -28,6 +28,8 @@ services:
         condition: service_healthy
       keycloak-import:
         condition: service_completed_successfully
+      keycloak-bootstrap-admin:
+        condition: service_completed_successfully
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
@@ -259,6 +261,63 @@ services:
     volumes:
       - ./bootstrap/import_realm.sh:/bootstrap/import_realm.sh:ro
       - ./realm:/opt/keycloak/data/import-src:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
+  # Creates the master-realm administrator if there isn't one.
+  # Runs between the import and the server, because the import is what stops
+  # `start` from creating it. See bootstrap/bootstrap_admin.sh.
+  keycloak-bootstrap-admin:
+    image: quay.io/keycloak/keycloak:26.5.3
+    container_name: gryt-auth-keycloak-bootstrap-admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-import:
+        condition: service_completed_successfully
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: ${GRYT_AUTH_POSTGRES_DB:-keycloak}
+      KC_DB_USERNAME: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
+      GRYT_KEYCLOAK_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+    entrypoint: ["bash", "/bootstrap/bootstrap_admin.sh"]
+    volumes:
+      - ./bootstrap/bootstrap_admin.sh:/bootstrap/bootstrap_admin.sh:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
+  # Sets the realm's declarative User Profile once Keycloak is up.
+  #
+  # It cannot live in keycloak-import: that runs `kc.sh import` before Keycloak
+  # starts, and this is an admin API call that needs a running server. It also
+  # cannot live in gryt-realm.json — a userProfile block there is rejected on
+  # import and takes the stack down (GRYT-136). Hence a third one-shot.
+  #
+  # Has to follow every realm import, because `--override true` deletes the realm
+  # and the profile with it. Note that `docker compose up -d` does NOT re-run a
+  # one-shot that has already exited unless its config changed — up.sh recreates
+  # this one explicitly. See bootstrap/apply_user_profile.sh.
+  keycloak-user-profile:
+    image: curlimages/curl:8.11.1
+    container_name: gryt-auth-keycloak-user-profile
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KC_URL: http://keycloak:8080
+      GRYT_REALM: ${GRYT_REALM:-gryt}
+      GRYT_IMPORT_REALM: ${GRYT_IMPORT_REALM:-0}
+      GRYT_KEYCLOAK_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+    entrypoint: ["sh", "/bootstrap/apply_user_profile.sh"]
+    volumes:
+      - ./bootstrap/apply_user_profile.sh:/bootstrap/apply_user_profile.sh:ro
+      - ./bootstrap/gryt-user-profile.json:/bootstrap/gryt-user-profile.json:ro
     networks:
       - gryt-auth-network
     restart: "no"

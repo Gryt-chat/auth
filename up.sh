@@ -21,11 +21,23 @@ if [[ ! -f "${THEME_JAR}" ]]; then
   "${AUTH_DIR}/login-theme/build.sh"
 fi
 
-if [[ -f "${AUTH_DIR}/.env" ]]; then
-  # Use compose's dotenv parsing (doesn't require shell-quoting)
-  exec docker compose --env-file "${AUTH_DIR}/.env" -f "${AUTH_DIR}/docker-compose.keycloak.yml" up -d
+compose() {
+  if [[ -f "${AUTH_DIR}/.env" ]]; then
+    # Use compose's dotenv parsing (doesn't require shell-quoting)
+    docker compose --env-file "${AUTH_DIR}/.env" -f "${AUTH_DIR}/docker-compose.keycloak.yml" "$@"
+  else
+    docker compose -f "${AUTH_DIR}/docker-compose.keycloak.yml" "$@"
+  fi
+}
+
+if [[ ! -f "${AUTH_DIR}/.env" ]]; then
+  echo "[auth/up.sh] Missing auth/.env. Copy auth/.env.example -> auth/.env and set GRYT_SMTP_USER/GRYT_SMTP_PASS." >&2
 fi
 
-echo "[auth/up.sh] Missing auth/.env. Copy auth/.env.example -> auth/.env and set GRYT_SMTP_USER/GRYT_SMTP_PASS." >&2
-exec docker compose -f "${AUTH_DIR}/docker-compose.keycloak.yml" up -d
+compose up -d
 
+# `up` leaves an already-exited one-shot alone, so the profile would not be
+# re-applied after a realm import wiped it. Recreating it explicitly is cheap —
+# the container runs for about a second — and it is the only thing standing
+# between a re-imported realm and registration failing again (GRYT-180).
+compose up -d --force-recreate --no-deps keycloak-user-profile
