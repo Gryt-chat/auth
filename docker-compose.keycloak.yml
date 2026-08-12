@@ -67,7 +67,13 @@ services:
     ports:
       - "${GRYT_KEYCLOAK_BIND:-0.0.0.0}:${GRYT_KEYCLOAK_PORT:-18080}:8080"
     volumes:
+      # Email theme only — the login theme is the jar below.
       - ./themes:/opt/keycloak/themes:ro
+      # The Keycloakify-built login theme. Build it with
+      # `login-theme/build.sh`, which produces the jar in Docker so no JVM is
+      # needed on the host. Keycloak loads themes from providers at startup, so
+      # a rebuilt jar needs a container restart to take effect.
+      - ./login-theme/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar:/opt/keycloak/providers/gryt-login-theme.jar:ro
     networks:
       - gryt-auth-network
     restart: unless-stopped
