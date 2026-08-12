@@ -131,7 +131,12 @@
 
 .gryt-auth-main {
   display: flex;
-  align-items: center;
+  /* `safe`, because centring an item taller than its container overflows it in
+     both directions — and the half above the top is not reachable by scrolling.
+     On the authenticator setup page that put the content's top 84px above the
+     column, eating the padding and the first step with it. `safe` falls back to
+     start the moment the content does not fit, and centres it when it does. */
+  align-items: safe center;
   justify-content: center;
   padding: 2.5rem 2rem;
   overflow-y: auto;

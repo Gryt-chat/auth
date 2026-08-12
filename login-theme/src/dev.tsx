@@ -104,6 +104,21 @@ function Dev() {
       if (Array.isArray(profile?.attributes)) {
         profile.attributes = profile.attributes.filter(a => keep(a.name));
       }
+
+      // The mock names the saved authenticators "label1" and "label2", which
+      // reads as placeholder text sitting in the page rather than as data. They
+      // are whatever a person called their own device, so they get names that
+      // look like ones. The picker only appears at all with more than one.
+      const otpLogin = ctx.otpLogin as
+        | { userOtpCredentials?: { id: string; userLabel: string }[] }
+        | undefined;
+      if (otpLogin?.userOtpCredentials) {
+        const names = ["iPhone", "1Password"];
+        otpLogin.userOtpCredentials = otpLogin.userOtpCredentials.map((c, i) => ({
+          ...c,
+          userLabel: names[i] ?? c.userLabel
+        }));
+      }
     }
     kcContext = ctx;
   } catch (e) {
