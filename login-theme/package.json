@@ -1,0 +1,33 @@
+{
+  "name": "@gryt/login-theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Keycloak login theme for Gryt, built with Keycloakify so it can use @gryt/ui.",
+  "scripts": {
+    "dev": "vite",
+    "_comment_build": "vite only, no tsc gate: the pages under src/login/pages are vendored by @keycloakify/login-ui's postinstall, and some do not pass our strict settings (an unused @ts-expect-error in login-passkeys-conditional-authenticate). Failing the build on generated code we do not own would mean owning files just to silence them. Run `npm run typecheck` to see everything, ours included.",
+    "build": "vite build",
+    "typecheck": "tsc -b",
+    "build-keycloak-theme": "npm run build && keycloakify build",
+    "storybook": "keycloakify start-keycloak",
+    "postinstall": "keycloakify sync-extensions"
+  },
+  "dependencies": {
+    "@gryt/ui": "^0.4.0",
+    "@keycloakify/login-ui": "^250004.7.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "keycloakify": "^11.15.14",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "tsafe": "^1.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7"
+  }
+}

@@ -12,8 +12,14 @@
         "up-username-not-idn-homograph": {}
       },
       "permissions": {
-        "view": ["admin", "user"],
-        "edit": ["admin", "user"]
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
       },
       "multivalued": false
     },
@@ -27,41 +33,19 @@
         }
       },
       "required": {
-        "roles": ["user"]
+        "roles": [
+          "user"
+        ]
       },
       "permissions": {
-        "view": ["admin", "user"],
-        "edit": ["admin", "user"]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "firstName",
-      "displayName": "${firstName}",
-      "validations": {
-        "length": {
-          "max": 255
-        },
-        "person-name-prohibited-characters": {}
-      },
-      "permissions": {
-        "view": ["admin", "user"],
-        "edit": ["admin", "user"]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "lastName",
-      "displayName": "${lastName}",
-      "validations": {
-        "length": {
-          "max": 255
-        },
-        "person-name-prohibited-characters": {}
-      },
-      "permissions": {
-        "view": ["admin", "user"],
-        "edit": ["admin", "user"]
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
       },
       "multivalued": false
     }
@@ -74,4 +58,3 @@
     }
   ]
 }
-

@@ -1,6 +1,12 @@
 .env
 node_modules/
 dist/
+# The login theme jar is a build artifact — build it with login-theme/build.sh.
+# up.sh builds it automatically when missing, because docker-compose mounts it
+# and Docker would otherwise silently create an empty directory in its place.
+login-theme/dist_keycloak/
+# `tsc -b` incremental state, not source.
+login-theme/tsconfig.tsbuildinfo
 tmp-export/
 backups/*.sql
 backups/*.sql.gz
