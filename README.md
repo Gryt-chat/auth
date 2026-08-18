@@ -1,20 +1,25 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/Gryt-chat/client/main/public/logo.svg" width="80" alt="Gryt logo" />
   <h1>Gryt Auth</h1>
-  <p>Keycloak-based authentication for the <a href="https://github.com/Gryt-chat/gryt">Gryt</a> voice chat platform.<br />Centralized identity management, SSO, and token-based auth.</p>
+  <p>Keycloak-based authentication for <a href="https://github.com/Gryt-chat/gryt">Gryt</a>, the voice, video and text chat platform.<br />One identity across every Gryt server, with token-based auth.</p>
 </div>
 
 <br />
 
 > **This repository is open source for transparency — you are not expected to host this yourself.**
 
-## Why Centralized Auth?
+## Why one central auth service
 
-Gryt uses a single auth service at **auth.gryt.chat**. All users authenticate through it regardless of which server they connect to. This ensures identities are consistent and verifiable across the entire network — if anyone could run their own auth service, they could impersonate any user.
+Gryt uses a single auth service at **auth.gryt.chat**, and everyone
+authenticates through it whatever server they connect to. If anyone could run
+their own, they could mint an identity claiming to be anyone else, so the
+identities would stop meaning anything.
 
-- **Server hosts** — Your server validates tokens against `auth.gryt.chat`. No auth setup required.
-- **Users** — Sign up once, your identity works on every Gryt server.
-- **Contributors** — This repo is open so you can audit and contribute. The dev setup below is only needed for working on auth itself.
+For a server host that means no auth setup: your server validates tokens against
+`auth.gryt.chat`. For a user it means signing up once and being the same person
+on every Gryt server. For a contributor it means this repo is here to be audited,
+and the development setup below is only needed if you are working on auth
+itself.
 
 ## Overview
 
@@ -26,7 +31,7 @@ Gryt uses a single auth service at **auth.gryt.chat**. All users authenticate th
 | **Bootstrap** | One-shot containers that bring a fresh Keycloak into a usable state ([details](#bootstrap)) |
 | **Ops** | Backup/restore tooling for the Postgres database |
 
-## Development Setup
+## Development setup
 
 > Only needed if you're contributing to the auth service itself.
 
