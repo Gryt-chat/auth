@@ -81,7 +81,7 @@ hides both fields, registration then fails on inputs nobody can see.
 
 `bootstrap/gryt-user-profile.json` is the source of truth for what registration
 collects. Editing the profile in the admin console works until the next time this runs.
-Note that `docker compose up -d` will not re-run a one-shot that has already exited, so
+`docker compose up -d` will not re-run a one-shot that has already exited, so
 after a realm import you need `up.sh`, or:
 
 ```bash
