@@ -6,7 +6,7 @@
 
 <br />
 
-> **This repository is open source for transparency — you are not expected to host this yourself.**
+> **This repository is open source for transparency — you aren't expected to host this yourself.**
 
 ## Why one central auth service
 
@@ -18,7 +18,7 @@ identities would stop meaning anything.
 For a server host that means no auth setup: your server validates tokens against
 `auth.gryt.chat`. For a user it means signing up once and being the same person
 on every Gryt server. For a contributor it means this repo is here to be audited,
-and the development setup below is only needed if you are working on auth
+and the development setup below is only needed if you're working on auth
 itself.
 
 ## Overview
@@ -58,9 +58,9 @@ Two things about this are worth knowing before you change any of it.
 
 **The import is an offline operation.** `kc.sh import` rewrites the database directly, and a
 running Keycloak goes on holding the realm id it started with — so importing underneath one
-leaves it serving 500s until it is restarted, with every user in the realm already gone. It is
+leaves it serving 500s until it's restarted, with every user in the realm already gone. It's
 easy to do by accident, because `docker compose up -d` re-runs a one-shot whose config changed
-without restarting `keycloak`, whose own definition did not. `import_realm.sh` checks for a
+without restarting `keycloak`, whose own definition didn't. `import_realm.sh` checks for a
 listening server and refuses. To import deliberately:
 
 ```bash
@@ -68,7 +68,7 @@ docker compose -f docker-compose.keycloak.yml stop keycloak
 docker compose -f docker-compose.keycloak.yml up -d
 ```
 
-**The admin is not created by `KC_BOOTSTRAP_ADMIN_*` alone.** Keycloak only does that
+**The admin isn't created by `KC_BOOTSTRAP_ADMIN_*` alone.** Keycloak only does that
 when `start` finds no master realm, and `keycloak-import` creates master as a side
 effect of running first. On a genuinely fresh database that left a deployment with no
 administrator at all, which is why `keycloak-bootstrap-admin` exists.
@@ -81,7 +81,7 @@ hides both fields, registration then fails on inputs nobody can see.
 
 `bootstrap/gryt-user-profile.json` is the source of truth for what registration
 collects. Editing the profile in the admin console works until the next time this runs.
-`docker compose up -d` will not re-run a one-shot that has already exited, so
+`docker compose up -d` won't re-run a one-shot that has already exited, so
 after a realm import you need `up.sh`, or:
 
 ```bash
