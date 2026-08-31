@@ -48,6 +48,28 @@
         ]
       },
       "multivalued": false
+    },
+    {
+      "name": "grytMessageVault",
+      "displayName": "Message key backup",
+      "group": "user-metadata",
+      "multivalued": false,
+      "validations": {
+        "length": {
+          "max": 8192
+        }
+      },
+      "permissions": {
+        "view": [
+          "user"
+        ],
+        "edit": [
+          "user"
+        ]
+      },
+      "annotations": {
+        "inputType": "hidden"
+      }
     }
   ],
   "groups": [
