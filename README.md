@@ -44,7 +44,7 @@ Starts a local Keycloak instance via Docker Compose — completely separate from
 
 ## Bootstrap
 
-Four one-shot containers run around the Keycloak server, in this order. All of them
+Five one-shot containers run around the Keycloak server, in this order. All of them
 exit immediately and are safe to re-run.
 
 | Service | What it does |
@@ -53,6 +53,7 @@ exit immediately and are safe to re-run.
 | `keycloak-import` | Imports `realm/gryt-realm.json`, substituting SMTP settings. Only when `GRYT_IMPORT_REALM=1`. **`--override true` deletes the realm first — every user in it goes too.** Refuses to run while Keycloak is up; stop it first. |
 | `keycloak-bootstrap-admin` | Creates the master-realm admin if there isn't one. |
 | `keycloak-user-profile` | Applies `bootstrap/gryt-user-profile.json` through the admin API, once the server is up. |
+| `keycloak-security-policy` | Turns on brute-force protection and a password policy, through the admin API. |
 
 Two things about this are worth knowing before you change any of it.
 
@@ -87,6 +88,38 @@ after a realm import you need `up.sh`, or:
 ```bash
 docker compose -f docker-compose.keycloak.yml up -d --force-recreate --no-deps keycloak-user-profile
 ```
+
+**Login hardening is not in the realm file either.** `gryt-realm.json` sets no
+`bruteForceProtected`, no `failureFactor` and no `passwordPolicy`, so a stack brought up
+without `keycloak-security-policy` accepts unlimited login attempts against any account
+and whatever password a user picks. It runs through the admin API for the same reason the
+user profile does, and it re-runs the same way:
+
+```bash
+docker compose -f docker-compose.keycloak.yml up -d --force-recreate --no-deps keycloak-security-policy
+```
+
+The password policy is checked when a password is set, never when one is used, so turning
+it on locks nobody out — existing passwords keep working until they are next changed.
+Lockouts are temporary rather than permanent, because a permanent one hands anybody who
+knows an email address a way to lock its owner out.
+
+### Registration has no captcha
+
+Not scripted, because it needs keys that cannot live in the repository. With open
+registration and no captcha, an email address is the only thing a script needs to make as
+many accounts as it likes.
+
+Adding it takes two things:
+
+1. A site key and secret from reCAPTCHA or hCaptcha, in the realm's authentication
+   settings.
+2. The `reCAPTCHA` execution added to the registration flow and set to *Required*, under
+   Authentication → Flows → registration. Keycloak ships the execution; it is disabled by
+   default.
+
+Both are console operations against a running realm, and both are wiped by a realm import
+with `--override true`, so re-check them after one.
 
 ## Documentation
 

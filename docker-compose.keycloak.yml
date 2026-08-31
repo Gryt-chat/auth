@@ -322,6 +322,29 @@ services:
       - gryt-auth-network
     restart: "no"
 
+  keycloak-security-policy:
+    image: curlimages/curl:8.11.1
+    container_name: gryt-auth-keycloak-security-policy
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KC_URL: http://keycloak:8080
+      GRYT_REALM: ${GRYT_REALM:-gryt}
+      GRYT_KEYCLOAK_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+      GRYT_KC_FAILURE_FACTOR: ${GRYT_KC_FAILURE_FACTOR:-8}
+      GRYT_KC_WAIT_INCREMENT_SECONDS: ${GRYT_KC_WAIT_INCREMENT_SECONDS:-60}
+      GRYT_KC_MAX_WAIT_SECONDS: ${GRYT_KC_MAX_WAIT_SECONDS:-900}
+      GRYT_KC_MAX_DELTA_SECONDS: ${GRYT_KC_MAX_DELTA_SECONDS:-43200}
+      GRYT_KC_PASSWORD_POLICY: ${GRYT_KC_PASSWORD_POLICY:-}
+    entrypoint: ["sh", "/bootstrap/apply_security_policy.sh"]
+    volumes:
+      - ./bootstrap/apply_security_policy.sh:/bootstrap/apply_security_policy.sh:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
   identity:
     build:
       context: ./identity
