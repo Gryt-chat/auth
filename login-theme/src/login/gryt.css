@@ -580,6 +580,25 @@
   gap: 0.125rem;
 }
 
+/* What an irreversible action is about to destroy, one item per line.
+   Deliberately not .gryt-auth-facts, which is unmarked and muted because it
+   carries metadata beside a QR code. Here the list is the substance of the
+   page: it wants markers, so two consequences cannot be skimmed as one
+   sentence, and it wants body colour rather than the quiet grey. */
+.gryt-auth-consequences {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--gryt-muted);
+  max-width: 34rem;
+}
+
+.gryt-auth-consequences li::marker {
+  color: var(--gryt-danger, currentColor);
+}
+
 /* Black on transparent, on a dark card, is a QR code no camera can read. */
 .gryt-auth-qr {
   display: inline-flex;

@@ -5,6 +5,7 @@
 # login/components/LogoutOtherSessions.tsx
 # login/components/PasswordWrapper.tsx
 # login/components/Template/Template.tsx
+# login/pages/delete-account-confirm/Page.tsx
 # login/pages/error/Page.tsx
 # login/pages/info/Page.tsx
 # login/pages/login/Form.tsx
@@ -46,7 +47,6 @@
 /login/pages/code/index.ts
 /login/pages/code/Page.tsx
 /login/pages/delete-account-confirm/index.ts
-/login/pages/delete-account-confirm/Page.tsx
 /login/pages/delete-credential/index.ts
 /login/pages/delete-credential/Page.tsx
 /login/pages/error/index.ts
