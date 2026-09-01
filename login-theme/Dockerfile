@@ -8,7 +8,15 @@
 # Build and extract the jar with ./build.sh, which uses buildx --output so the
 # artifact lands in dist_keycloak/ without anything being installed locally.
 
-FROM node:22-bookworm AS builder
+# Pinned by digest, not just by tag. `node:22-bookworm` moves, and when Docker
+# resolves a digest it has not seen before, every layer below is invalidated —
+# including the Maven install, which is 58 seconds of the roughly two minutes
+# this takes. That is what makes an occasional build unexpectedly slow, and a
+# slow build on a production box is what gets interrupted.
+#
+# To move to a newer Node: change the tag and the digest together. `docker
+# pull node:22-bookworm` prints the digest it resolved.
+FROM node:22-bookworm@sha256:8a34c4ab3ea2c5cd194f07e317b2a8f09461d3c8b05c4e34c8ccd56d56024c4d AS builder
 
 # Maven only; the JDK comes with it. --no-install-recommends keeps this from
 # pulling a desktop's worth of suggested packages.
