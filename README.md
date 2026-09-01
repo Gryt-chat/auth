@@ -135,6 +135,36 @@ Managed Challenge weighs reputation rather than volume. So nothing stops a slow 
 ordinary-looking addresses. Fixing that means a Cloudflare rate-limiting rule on the
 registration path, not a change in here.
 
+## Themes
+
+Three of them, and they are built three different ways because they are three different
+kinds of page.
+
+| Theme | Where it lives | How it is built |
+|-------|----------------|-----------------|
+| **login** | `login-theme/` | Keycloakify, compiled into a jar. Real React, built from `@gryt/ui` so the sign-in page and the client share components rather than a look. |
+| **email** | `themes/gryt/email/` | Hand-written FreeMarker. Works, and Keycloakify's email support is a separate job. |
+| **account** | `themes/gryt/account/` | Keycloak's own console with Gryt's palette on it. |
+
+The account theme is the odd one, so here is why it is not a Keycloakify theme like the
+login one. `@keycloakify/keycloak-account-ui` peers on React 18 and PatternFly 5, and
+`login-theme/` is on React 19 — and every published line of that package wants React 18,
+including the one built for Keycloak 26.7, so a Keycloak upgrade would not resolve it.
+
+Painting the console we already serve turned out to be the better trade anyway. Every colour
+in PatternFly resolves from one table of custom properties, so remapping that table is the
+whole theme: no component is restyled, and a Keycloak upgrade that changes a component
+cannot break it. `themes/gryt/account/resources/css/account.css` is that table, and its
+palette comes from `@gryt/ui` through `npm run account-tokens` rather than being restated.
+
+The console is dark whatever the browser is set to, matching the login page it is reached
+from.
+
+**Changing `accountTheme` in `realm/gryt-realm.json` does not change a running Keycloak.**
+Realm JSON is read on a fresh import only. On a server that is already up, set it in the
+admin console under Realm settings → Themes, or with `kcadm.sh update realms/gryt -s
+accountTheme=gryt`.
+
 ## Documentation
 
 See the [architecture overview](https://docs.gryt.chat/docs/guide/architecture) for how auth fits into the Gryt platform.
