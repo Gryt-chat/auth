@@ -62,7 +62,11 @@ services:
       KC_HTTP_MANAGEMENT_PORT: "9000"
       KC_HTTP_MANAGEMENT_SCHEME: "http"
       KC_HTTP_ACCESS_LOG_ENABLED: "true"
-      KC_FEATURES: user-event-metrics
+      # update-email and recovery-codes are both opt-in on 26.5, so the two
+      # required actions that let somebody change their own address or make
+      # backup codes do not exist until this line names them. Adding a feature
+      # is a rebuild, so this needs a restart rather than a realm setting.
+      KC_FEATURES: user-event-metrics,update-email,recovery-codes
       KC_EVENT_METRICS_USER_ENABLED: "true"
     command:
       - start

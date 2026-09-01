@@ -13,12 +13,14 @@
 # login/pages/login-config-totp/Page.tsx
 # login/pages/login-otp/Page.tsx
 # login/pages/login-page-expired/Page.tsx
+# login/pages/login-recovery-authn-code-config/Page.tsx
 # login/pages/login-reset-password/Form.tsx
 # login/pages/login-update-password/Page.tsx
 # login/pages/login-verify-email/Page.tsx
 # login/pages/logout-confirm/Page.tsx
 # login/pages/register/Form.tsx
 # login/pages/select-authenticator/Page.tsx
+# login/pages/update-email/Page.tsx
 # login/pages/webauthn-authenticate/Page.tsx
 # login/pages/webauthn-error/Page.tsx
 # login/pages/webauthn-register/Page.tsx
@@ -81,7 +83,6 @@
 /login/pages/login-password/Page.tsx
 /login/pages/login-password/useScript.tsx
 /login/pages/login-recovery-authn-code-config/index.ts
-/login/pages/login-recovery-authn-code-config/Page.tsx
 /login/pages/login-recovery-authn-code-config/useScript.tsx
 /login/pages/login-recovery-authn-code-input/index.ts
 /login/pages/login-recovery-authn-code-input/Page.tsx
@@ -110,7 +111,6 @@
 /login/pages/terms/index.ts
 /login/pages/terms/Page.tsx
 /login/pages/update-email/index.ts
-/login/pages/update-email/Page.tsx
 /login/pages/webauthn-authenticate/index.ts
 /login/pages/webauthn-authenticate/useScript.tsx
 /login/pages/webauthn-error/index.ts

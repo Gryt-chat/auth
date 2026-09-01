@@ -48,6 +48,8 @@ const REACHABLE = [
   "login-page-expired.ftl",
   "logout-confirm.ftl",
   "delete-account-confirm.ftl",
+  "update-email.ftl",
+  "login-recovery-authn-code-config.ftl",
   "info.ftl",
   "error.ftl",
 ] as const;
@@ -55,10 +57,8 @@ const REACHABLE = [
 const REST = [
   "login-update-profile.ftl",
   "terms.ftl",
-  "update-email.ftl",
   "login-oauth-grant.ftl",
   "login-idp-link-confirm.ftl",
-  "login-recovery-authn-code-config.ftl",
   "saml-post-form.ftl",
   "code.ftl",
   "frontchannel-logout.ftl",
