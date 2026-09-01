@@ -597,6 +597,50 @@
 
 .gryt-auth-consequences li::marker {
   color: var(--gryt-danger, currentColor);
+/* One-time recovery codes. Monospace because they get copied by eye as often
+   as by button, and 0/O and 1/l are the difference between getting back in and
+   not. Numbered by the list, not by a span in each item — the copy script reads
+   innerText, and a "1:" prefix ends up in the clipboard. */
+.gryt-auth-codes {
+  margin: 0;
+  padding-left: 1.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.25rem 1rem;
+  font-family: var(--gryt-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.gryt-auth-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* The three buttons are the only way off the page with the codes, so they read
+   as links rather than as secondary actions competing with the submit. */
+.gryt-auth-code-actions .gryt-auth-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gryt-auth-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--gryt-muted);
+  cursor: pointer;
+}
+
+.gryt-auth-confirm input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
 }
 
 /* Black on transparent, on a dark card, is a QR code no camera can read. */
