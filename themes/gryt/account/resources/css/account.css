@@ -1,0 +1,133 @@
+/* Gryt's palette on PatternFly's, for the account console.
+ *
+ * The console is a PatternFly 5 app we do not own, and every colour in it comes
+ * from one table of custom properties. Remapping that table is the whole of this
+ * file — no component is restyled, so a Keycloak upgrade that changes a
+ * component cannot break it. The old login theme did the opposite and carried
+ * 610 lines of overrides for it.
+ *
+ * **Dark whatever the browser is set to**, like the login page it is reached
+ * from. PatternFly's dark mode is a `.pf-v5-theme-dark` class the console's
+ * index.ftl adds from `prefers-color-scheme`, and it sets its values through
+ * `:where()`, which has no specificity — so a plain `:root` block beats it in
+ * both states and there is nothing to write twice. Following the system is a
+ * job for after the login page can.
+ *
+ * The list below is the one PatternFly's dark theme actually sets, read out of
+ * its own stylesheet rather than guessed at. Anything it sets and this does not
+ * would still be a Red Hat colour.
+ */
+
+:root {
+  /* The greys, light to dark. PatternFly has ten and Gryt has seven, so a few
+     steps repeat rather than being invented — 100 and 300 are the ones with no
+     Gryt equivalent, and doubling their neighbour is closer than a made-up hex.
+     1000 is only the masthead, and is not in the dark theme's own list. */
+  --pf-v5-global--palette--black-50: var(--gryt-text);
+  --pf-v5-global--palette--black-100: var(--gryt-text);
+  --pf-v5-global--palette--black-200: var(--gryt-muted);
+  --pf-v5-global--palette--black-300: var(--gryt-muted);
+  --pf-v5-global--palette--black-400: var(--gryt-surface-hover);
+  --pf-v5-global--palette--black-500: var(--gryt-border);
+  --pf-v5-global--palette--black-600: var(--gryt-surface-raised);
+  --pf-v5-global--palette--black-700: var(--gryt-surface);
+  --pf-v5-global--palette--black-800: var(--gryt-bg);
+  --pf-v5-global--palette--black-900: var(--gryt-bg);
+  --pf-v5-global--palette--black-1000: var(--gryt-surface);
+
+  --pf-v5-global--palette--blue-300: var(--gryt-accent);
+  --pf-v5-global--palette--red-9999: var(--gryt-danger);
+  --pf-v5-global--palette--red-8888: var(--gryt-danger-light);
+
+  /* Surfaces. The page and the section it holds are both the page colour;
+     PatternFly draws them a step apart, which reads as a panel inside a panel
+     once the cards on top are already lighter. */
+  --pf-v5-global--BackgroundColor--100: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--150: var(--gryt-surface);
+  --pf-v5-global--BackgroundColor--200: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--300: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--400: var(--gryt-surface-raised);
+  --pf-v5-global--BackgroundColor--light-100: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--light-200: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--light-300: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--dark-100: var(--gryt-surface);
+  --pf-v5-global--BackgroundColor--dark-200: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--dark-300: var(--gryt-bg);
+  --pf-v5-global--BackgroundColor--dark-400: var(--gryt-surface-raised);
+
+  --pf-v5-global--BorderColor--100: var(--gryt-border);
+  --pf-v5-global--BorderColor--200: var(--gryt-border);
+  --pf-v5-global--BorderColor--300: var(--gryt-surface-hover);
+  --pf-v5-global--BorderColor--400: var(--gryt-muted);
+  --pf-v5-global--BorderColor--dark-100: var(--gryt-border);
+  --pf-v5-global--BorderColor--light-100: var(--gryt-border);
+
+  --pf-v5-global--Color--100: var(--gryt-text);
+  --pf-v5-global--Color--200: var(--gryt-muted);
+  --pf-v5-global--Color--dark-100: var(--gryt-text);
+  --pf-v5-global--Color--dark-200: var(--gryt-muted);
+  --pf-v5-global--Color--light-100: var(--gryt-text);
+  --pf-v5-global--Color--light-200: var(--gryt-muted);
+  --pf-v5-global--Color--light-300: var(--gryt-surface-hover);
+
+  /* One accent, not three. PatternFly keeps primary, active and link apart so a
+     product can tint them separately; Gryt does not, and neither does the login
+     page. 400 is the text drawn on a filled accent, which is why it is the only
+     one that is not the accent itself. */
+  --pf-v5-global--primary-color--100: var(--gryt-accent);
+  --pf-v5-global--primary-color--300: var(--gryt-accent);
+  --pf-v5-global--primary-color--400: var(--gryt-on-accent);
+  --pf-v5-global--primary-color--light-100: var(--gryt-accent);
+  --pf-v5-global--primary-color--dark-100: var(--gryt-accent);
+  --pf-v5-global--active-color--100: var(--gryt-accent);
+  --pf-v5-global--custom-color--200: var(--gryt-secondary);
+
+  --pf-v5-global--link--Color: var(--gryt-accent);
+  --pf-v5-global--link--Color--hover: var(--gryt-accent-light);
+  --pf-v5-global--link--Color--visited: var(--gryt-accent-light);
+  --pf-v5-global--link--Color--light: var(--gryt-accent);
+  --pf-v5-global--link--Color--light--hover: var(--gryt-accent-light);
+  --pf-v5-global--link--Color--dark: var(--gryt-accent);
+  --pf-v5-global--link--Color--dark--hover: var(--gryt-accent-light);
+
+  --pf-v5-global--success-color--100: var(--gryt-success);
+  --pf-v5-global--warning-color--100: var(--gryt-warning);
+  --pf-v5-global--warning-color--200: var(--gryt-warning);
+  --pf-v5-global--danger-color--100: var(--gryt-danger);
+  --pf-v5-global--danger-color--200: var(--gryt-danger-light);
+
+  --pf-v5-global--disabled-color--100: var(--gryt-muted);
+  --pf-v5-global--disabled-color--200: var(--gryt-border);
+  --pf-v5-global--disabled-color--300: var(--gryt-muted);
+
+  --pf-v5-global--icon--Color--light: var(--gryt-muted);
+  --pf-v5-global--icon--Color--dark: var(--gryt-text);
+  --pf-v5-global--icon--Color--light--light: var(--gryt-muted);
+  --pf-v5-global--icon--Color--dark--light: var(--gryt-text);
+  --pf-v5-global--icon--Color--light--dark: var(--gryt-muted);
+  --pf-v5-global--icon--Color--dark--dark: var(--gryt-text);
+
+  /* PatternFly ships Red Hat's faces and this theme does not, so its stack was
+     falling through to Helvetica. The login page runs on the system stack, so
+     this is the same text on both. */
+  --pf-v5-global--FontFamily--text: ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--heading: ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--redhatfont--text: ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--redhatfont--heading: ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The logo is a 512-square owl and the masthead sizes brand images by height
+   alone, so without this it draws at whatever the file asks for. */
+.pf-v5-c-brand {
+  height: 2rem;
+  width: auto;
+}
+
+/* The console shows a spinner on a white panel while its bundle parses. That
+   panel is written into index.ftl's own <style> rather than coming from
+   PatternFly, so remapping the table above does not reach it — and it is the
+   first thing anybody sees. */
+.keycloak__loading-container {
+  color: var(--gryt-text);
+  background-color: var(--gryt-bg);
+}

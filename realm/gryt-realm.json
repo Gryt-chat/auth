@@ -9,6 +9,7 @@
   "duplicateEmailsAllowed": false,
   "rememberMe": true,
   "verifyEmail": true,
+  "accountTheme": "gryt",
   "loginTheme": "gryt",
   "emailTheme": "gryt",
   "smtpServer": {
