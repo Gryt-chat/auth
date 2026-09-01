@@ -597,6 +597,8 @@
 
 .gryt-auth-consequences li::marker {
   color: var(--gryt-danger, currentColor);
+}
+
 /* One-time recovery codes. Monospace because they get copied by eye as often
    as by button, and 0/O and 1/l are the difference between getting back in and
    not. Numbered by the list, not by a span in each item — the copy script reads
