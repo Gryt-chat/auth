@@ -153,7 +153,7 @@
       "alias": "delete_account",
       "name": "Delete Account",
       "providerId": "delete_account",
-      "enabled": false,
+      "enabled": true,
       "defaultAction": false,
       "priority": 80,
       "config": {}
