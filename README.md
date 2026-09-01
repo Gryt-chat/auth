@@ -104,22 +104,36 @@ it on locks nobody out — existing passwords keep working until they are next c
 Lockouts are temporary rather than permanent, because a permanent one hands anybody who
 knows an email address a way to lock its owner out.
 
-### Registration has no captcha
+### What stops a bot registering
 
-Not scripted, because it needs keys that cannot live in the repository. With open
-registration and no captcha, an email address is the only thing a script needs to make as
-many accounts as it likes.
+Most of it isn't in this repository.
 
-Adding it takes two things:
+**A Cloudflare Managed Challenge on the registration path** (GRYT-782). It judges the
+browser and the address it comes from, so it turns away crude automation. Someone driving a
+real browser through a residential proxy gets past it.
 
-1. A site key and secret from reCAPTCHA or hCaptcha, in the realm's authentication
-   settings.
-2. The `reCAPTCHA` execution added to the registration flow and set to *Required*, under
-   Authentication → Flows → registration. Keycloak ships the execution; it is disabled by
-   default.
+**Email verification.** `verifyEmail` is on, so every account needs a mailbox somebody can
+read. That forces an attacker onto a throwaway-mail service or a domain they own. It's also
+why blocking throwaway domains would help here.
 
-Both are console operations against a running realm, and both are wiped by a realm import
-with `--override true`, so re-check them after one.
+**Brute-force protection** is about guessing a password, not making an account.
+`apply_security_policy.sh` turns it on, and it does nothing for registration.
+
+**No captcha inside the Keycloak flow, and that's deliberate.** Keycloak 26.5.3 ships two
+captcha authenticators and both are Google's — `RegistrationRecaptcha` has
+`/recaptcha/api/siteverify` written into it, with no way to point it somewhere else. So
+Turnstile needs a Java authenticator rather than a setting. That's GRYT-790, and we haven't
+built it on purpose. Google's would work today, and it would hand Google every registration.
+
+If you do add one, both halves are things you do in the admin console, and a realm import
+with `--override true` wipes them. Check them again afterwards.
+
+#### The gap
+
+Nothing rate-limits registration. Brute-force protection only covers logging in, and a
+Managed Challenge weighs reputation rather than volume. So nothing stops a slow trickle from
+ordinary-looking addresses. Fixing that means a Cloudflare rate-limiting rule on the
+registration path, not a change in here.
 
 ## Documentation
 

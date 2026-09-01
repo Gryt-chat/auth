@@ -123,4 +123,9 @@ fi
 
 log "brute-force protection on: ${FAILURE_FACTOR} failures, ${WAIT_INCREMENT}s doubling to ${MAX_WAIT}s, forgotten after ${MAX_DELTA}s"
 log "password policy: ${PASSWORD_POLICY}"
-log "NOTE: registration has no captcha. That needs keys and an auth-flow change; see the README."
+# Deliberately does not say "registration has no captcha", which is what this
+# line used to say. It is true of the Keycloak flow and false of the deployment:
+# GRYT-782 put a Cloudflare Managed Challenge in front of the registration path,
+# where this script cannot see it. Read literally, the old wording sent people
+# off to buy reCAPTCHA keys for something already partly covered.
+log "note: no captcha in the Keycloak flow. On gryt.chat the challenge is at the edge; see the README before adding one."
