@@ -28,6 +28,10 @@ import { getKcContextMock } from "./login/mocks/getKcContextMock";
  * offer webauthn-authenticator-passwordless beside the password form, which is
  * what makes select-authenticator and the webauthn pages ordinary rather than
  * exotic.
+ *
+ * delete-account-confirm moved up here when auth#17 enabled the delete_account
+ * required action. Gryt reaches it with kc_action=delete_account rather than
+ * through the account console, so it is a login page like the rest.
  */
 const REACHABLE = [
   "login.ftl",
@@ -43,6 +47,7 @@ const REACHABLE = [
   "login-config-totp.ftl",
   "login-page-expired.ftl",
   "logout-confirm.ftl",
+  "delete-account-confirm.ftl",
   "info.ftl",
   "error.ftl",
 ] as const;
@@ -51,7 +56,6 @@ const REST = [
   "login-update-profile.ftl",
   "terms.ftl",
   "update-email.ftl",
-  "delete-account-confirm.ftl",
   "login-oauth-grant.ftl",
   "login-idp-link-confirm.ftl",
   "login-recovery-authn-code-config.ftl",
