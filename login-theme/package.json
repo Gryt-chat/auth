@@ -7,9 +7,13 @@
   "scripts": {
     "dev": "vite",
     "pages": "vite --open /dev.html",
-    "_comment_pages": "Look at every login page locally. `npm run storybook` is keycloakify start-keycloak, which shells out to a Maven build \u2014 this repo builds the theme in Docker so nobody needs Maven, so that script does not work here. This renders the same pages against the mock context the library ships.",
+    "_comment_pages": "Look at every login page locally. `npm run storybook` is keycloakify start-keycloak, which shells out to a Maven build — this repo builds the theme in Docker so nobody needs Maven, so that script does not work here. This renders the same pages against the mock context the library ships.",
     "_comment_build": "vite only, no tsc gate: the pages under src/login/pages are vendored by @keycloakify/login-ui's postinstall, and some do not pass our strict settings (an unused @ts-expect-error in login-passkeys-conditional-authenticate). Failing the build on generated code we do not own would mean owning files just to silence them. Run `npm run typecheck` to see everything, ours included.",
     "build": "vite build",
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "_comment_lint_css": "Only src. Everything under public/ is vendored by keycloakify sync-extensions — PatternFly and Keycloak's own CSS — and is not ours to fix. stylelint.config.js says what it checks and why.",
+    "verify": "npm run lint:css && npm run build && node scripts/check-built-css.mjs",
+    "_comment_verify": "What CI runs. The build is not just a smoke test: check-built-css compares the classes gryt.css styles against the ones that survive into the bundle, because the bug this exists for exited 0 and dropped a third of the file.",
     "typecheck": "tsc -b",
     "build-keycloak-theme": "npm run build && keycloakify build",
     "storybook": "keycloakify start-keycloak",
@@ -29,6 +33,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "stylelint": "^17.14.1",
     "typescript": "^5.9.3",
     "vite": "^7.2.7"
   }

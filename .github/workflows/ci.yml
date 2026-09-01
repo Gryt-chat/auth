@@ -1,0 +1,43 @@
+name: CI
+
+# Nothing checked the login theme before this. A stylesheet with a rule missing
+# its closing brace built clean, deployed, and took the sign-in page down for
+# about five hours on 2026-09-01 — the form ended up 2.4 million pixels below
+# the top of the page. `npm run verify` is what would have caught it.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  login-theme:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: login-theme
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: login-theme/package-lock.json
+
+      # `npm ci` runs the postinstall, which is `keycloakify sync-extensions`.
+      # That vendors the pages under src/login/pages and everything in public/,
+      # and the build needs both.
+      - run: npm ci
+
+      # lint:css, then build, then check the built bundle still has every class
+      # the source styles. The middle step is the one that used to pass on its
+      # own while dropping a third of the stylesheet.
+      - run: npm run verify
+
+      # Not `typecheck`: it covers the vendored pages too, and one of them ships
+      # an unused @ts-expect-error that fails under our settings. package.json
+      # says the same thing about why `build` is vite-only.
