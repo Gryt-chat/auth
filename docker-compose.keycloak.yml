@@ -209,6 +209,7 @@ services:
       PGUSER: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
       PGPASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
       GRYT_IMPORT_REALM: ${GRYT_IMPORT_REALM:-0}
+      BACKUP_MIN_BYTES: ${GRYT_BACKUP_MIN_BYTES:-10000}
     entrypoint: ["sh", "-c"]
     command:
       - |
@@ -216,14 +217,52 @@ services:
           echo "[pre-import-backup] GRYT_IMPORT_REALM!=1, skipping."
           exit 0
         fi
+        # Every failure below exits non-zero, and that is the point of this
+        # service rather than a detail of it. `keycloak-import` waits on this
+        # one with `condition: service_completed_successfully`, and what it goes
+        # on to run is `kc.sh import --override true`, which deletes the realm
+        # and every account in it. An exit code from here is what stands between
+        # a bad backup and an unrecoverable import.
+        #
+        # It did not used to be. There was no `set -e`, and the dump was
+        # `pg_dump | gzip > "$$out"` — no pipefail, so a failed pg_dump handed
+        # gzip an EOF, gzip wrote a valid empty archive and exited 0, the
+        # pipeline succeeded, this printed "Done" and exited 0, and the import
+        # proceeded with nothing to go back to. Not theoretical: the same
+        # construct in the pg-backup service produced
+        # keycloak-20260901T183343Z.sql.gz — twenty bytes, decompressing to zero.
+        set -eu
         ts=$$(date -u +%Y%m%dT%H%M%SZ)
-        out="/backups/keycloak-pre-import-$${ts}.sql.gz"
-        echo "[pre-import-backup] Backing up before realm import: $${out}"
-        pg_dump | gzip > "$${out}"
-        size=$$(du -h "$${out}" | cut -f1)
-        echo "[pre-import-backup] Done ($${size})"
+        final="/backups/keycloak-pre-import-$${ts}.sql.gz"
+        raw="/backups/.keycloak-pre-import-$${ts}.sql"
+        part="$${final}.part"
+        trap 'rm -f "$${raw}" "$${part}"' EXIT
+
+        echo "[pre-import-backup] Backing up before realm import: $${final}"
+
+        # Uncompressed first, so what is checked is pg_dump's own exit status
+        # rather than gzip's.
+        if ! pg_dump > "$${raw}"; then
+          echo "[pre-import-backup] REFUSING TO CONTINUE: pg_dump failed. The realm import must not run without a backup." >&2
+          exit 1
+        fi
+
+        size=$$(wc -c < "$${raw}" | tr -d " ")
+        if [ "$${size}" -lt "$${BACKUP_MIN_BYTES}" ]; then
+          echo "[pre-import-backup] REFUSING TO CONTINUE: dump is $${size} bytes, under the $${BACKUP_MIN_BYTES} floor." >&2
+          exit 1
+        fi
+
+        gzip -c "$${raw}" > "$${part}"
+        if ! gzip -t "$${part}"; then
+          echo "[pre-import-backup] REFUSING TO CONTINUE: the archive does not decompress." >&2
+          exit 1
+        fi
+
+        mv "$${part}" "$${final}"
+        echo "[pre-import-backup] Done ($$(du -h "$${final}" | cut -f1), from $${size} bytes)"
     volumes:
-      - ./backups:/backups
+      - ${GRYT_AUTH_BACKUP_DIR:-./backups}:/backups
     networks:
       - gryt-auth-network
     restart: "no"
@@ -392,18 +431,70 @@ services:
       PGUSER: ${GRYT_AUTH_POSTGRES_USER:-keycloak}
       PGPASSWORD: ${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}
       BACKUP_RETAIN_DAYS: ${GRYT_BACKUP_RETAIN_DAYS:-30}
+      # A floor rather than a comparison against the last dump, because the
+      # first run on a fresh realm has nothing to compare to and should still
+      # be allowed. Well under a real dump and far above an empty one.
+      BACKUP_MIN_BYTES: ${GRYT_BACKUP_MIN_BYTES:-10000}
       BACKUP_CRON: ${GRYT_BACKUP_CRON:-0 */6 * * *}
     entrypoint: ["sh", "-c"]
     command:
       - |
         cat > /usr/local/bin/pg-backup.sh << 'SCRIPT'
         #!/bin/sh
+        # A dump that fails must not look like one that worked, and must never
+        # be the reason an older good one is deleted.
+        #
+        # This used to be `pg_dump | gzip > "$$out"` under `set -eu`. There is no
+        # pipefail here, so a pg_dump that failed still handed gzip an EOF, gzip
+        # wrote a valid twenty-byte archive and exited 0, the pipeline succeeded,
+        # and the script logged "Done" with the size of a file containing
+        # nothing. keycloak-20260901T183343Z.sql.gz is that file: 20 bytes,
+        # decompressing to zero, among 123 others of about 127 KB. It is the run
+        # the container does on startup, so Postgres was presumably not up yet.
+        #
+        # One bad file is survivable. The prune underneath it is what is not: it
+        # ran unconditionally, straight after the dump, so a pg_dump that broke
+        # and stayed broken — a rotated password, a major version bump, a full
+        # disk — would write empty archives four times a day while deleting the
+        # real ones on a trailing edge, and say nothing. A month of that leaves
+        # no backup at all, and a realm import deletes every account with the
+        # dumps here as the only way back.
         set -eu
         ts=$$(date -u +%Y%m%dT%H%M%SZ)
-        out="/backups/keycloak-$${ts}.sql.gz"
-        echo "[pg-backup] $$(date -u +%FT%TZ) Creating $${out}"
-        pg_dump | gzip > "$${out}"
-        echo "[pg-backup] Done ($$(du -h "$${out}" | cut -f1))"
+        final="/backups/keycloak-$${ts}.sql.gz"
+        raw="/backups/.keycloak-$${ts}.sql"
+        part="$${final}.part"
+        trap 'rm -f "$${raw}" "$${part}"' EXIT
+
+        echo "[pg-backup] $$(date -u +%FT%TZ) Creating $${final}"
+
+        # Uncompressed first, so the status being checked is pg_dump's own
+        # rather than gzip's. The extra file is a couple of megabytes and lives
+        # for one command.
+        if ! pg_dump > "$${raw}"; then
+          echo "[pg-backup] FAILED: pg_dump exited non-zero. Existing backups left alone." >&2
+          exit 1
+        fi
+
+        size=$$(wc -c < "$${raw}" | tr -d " ")
+        if [ "$${size}" -lt "$${BACKUP_MIN_BYTES}" ]; then
+          echo "[pg-backup] FAILED: dump is $${size} bytes, under the $${BACKUP_MIN_BYTES} floor. Existing backups left alone." >&2
+          exit 1
+        fi
+
+        gzip -c "$${raw}" > "$${part}"
+        if ! gzip -t "$${part}"; then
+          echo "[pg-backup] FAILED: the archive does not decompress. Existing backups left alone." >&2
+          exit 1
+        fi
+
+        # Named only once it is known to be good, so a half-written file is
+        # never mistaken for a backup by anything reading this directory.
+        mv "$${part}" "$${final}"
+        echo "[pg-backup] Done ($$(du -h "$${final}" | cut -f1), from $${size} bytes)"
+
+        # Only here. Reaching this line means there is a verified dump from this
+        # run, which is the thing that earns the right to delete an old one.
         find /backups -name 'keycloak-*.sql.gz' -mtime +"$${BACKUP_RETAIN_DAYS}" -delete -print \
           | while read f; do echo "[pg-backup] Pruned $${f}"; done
         SCRIPT
@@ -413,7 +504,13 @@ services:
         echo "[pg-backup] Scheduled ($${BACKUP_CRON}). Waiting..."
         exec crond -f -l 6
     volumes:
-      - ./backups:/backups
+      # Defaults to beside the compose file, which is where it has always been.
+      # Point it at a mount from somewhere else and the dumps stop sharing a
+      # filesystem with the database they exist to restore — which is the
+      # failure that matters here, since a bad realm import deletes every
+      # account and takes anything on the same disk with it if that disk is
+      # what went wrong.
+      - ${GRYT_AUTH_BACKUP_DIR:-./backups}:/backups
     networks:
       - gryt-auth-network
     restart: unless-stopped
