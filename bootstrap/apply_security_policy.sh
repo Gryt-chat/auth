@@ -36,15 +36,22 @@ MAX_WAIT="${GRYT_KC_MAX_WAIT_SECONDS:-900}"
 # How long a quiet account takes to forget its failures.
 MAX_DELTA="${GRYT_KC_MAX_DELTA_SECONDS:-43200}"
 
-# Length over composition, which is what NIST settled on: a long passphrase
-# beats a short one with a symbol bolted onto the end, and composition rules
-# mostly teach people to write Password1!. notUsername and notEmail stop the
-# two guesses anybody would try first.
+# Four, which is short on purpose. A Gryt account is protected by its keypair;
+# this password only guards the Keycloak login that vouches for that keypair, so
+# the length is traded away for less friction signing up. notUsername and
+# notEmail stay -- they are the two guesses anybody tries first and they cost
+# nothing.
+#
+# It was length(12) until GRYT-979, on the NIST argument that a long passphrase
+# beats a short one with a symbol bolted onto the end. That argument is sound
+# for a password doing the whole job of protecting an account. It is not doing
+# that job here. Raise it back if that changes, rather than because twelve reads
+# safer than four.
 #
 # This is checked when a password is set, not when one is used, so nobody is
 # locked out by turning it on -- existing passwords keep working until they are
 # next changed.
-PASSWORD_POLICY="${GRYT_KC_PASSWORD_POLICY:-length(12) and notUsername and notEmail}"
+PASSWORD_POLICY="${GRYT_KC_PASSWORD_POLICY:-length(4) and notUsername and notEmail}"
 
 log() { echo "[security-policy] $*"; }
 
