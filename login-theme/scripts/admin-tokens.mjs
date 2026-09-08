@@ -1,22 +1,14 @@
-// Writes the admin console's palette from @gryt/theme's Gryt preset.
-//
-// The account console takes its palette from @gryt/ui's own token file. This
-// reads the same palette from @gryt/theme's preset list instead, which is the
-// same values by a shorter route and makes the choice of preset one line rather
-// than a rewrite (GRYT-1089).
-//
-// It was the OLED preset first, on the theory that the admin console should look
-// like a different room. It should not: the point of theming it at all is that
-// Gryt's console looks like Gryt.
-//
-// The three `on-*` values here differ slightly from the account theme's, which
-// come from @gryt/ui: #0c0a20 against #141126 for on-accent, and similar for the
-// other two. That is not a decision, it is drift — login-theme pins @gryt/ui
-// 0.4.0 against npm's 0.29.0 (GRYT-1090), so the account tokens are months old
-// and these are current. Both are "the Gryt palette"; they will agree again once
-// that bump lands.
-//
+// Writes the admin console's palette from @gryt/theme's Gryt preset — the same colours the
+// account console gets from @gryt/ui, by a route where the preset is one line to change.
+
+// It was the OLED preset first. It should not be: the point of theming the console at all
+// is that Gryt's console looks like Gryt, not that it looks like a different room.
+
+// The three on-* values differ from the account theme's — #0c0a20 against #141126 and so
+// on. Drift, not a decision: login-theme pins @gryt/ui 0.4.0 against 0.29.0 (GRYT-1090).
+
 // Re-run `npm run admin-tokens` after bumping @gryt/theme and commit the result.
+
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
