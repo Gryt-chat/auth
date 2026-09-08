@@ -8,14 +8,33 @@ const out = fileURLToPath(new URL("../../themes/gryt/account/resources/css/token
 
 const theme = readFileSync(src, "utf8");
 
-// Only the colours. The spring curve and the font stack are for components
-// this console does not have, and shipping them would suggest otherwise.
-const tokens = [...theme.matchAll(/--color-(gryt-[a-z-]+):\s*([^;]+);/g)].map(
+// Only the colours. The spring curve and the font stack are for components this console
+// does not have, and shipping them would suggest otherwise.
+
+// [a-z0-9-] and not [a-z-]: 0.29 moved to numbered scales, so the semantic names are
+// aliases now and without the digits every colour in the generated file resolves to nothing.
+const tokens = [...theme.matchAll(/--color-(gryt-[a-z0-9-]+):\s*([^;]+);/g)].map(
   ([, name, value]) => `  --${name}: ${value.trim()};`,
 );
 
 if (tokens.length === 0) {
   throw new Error(`No --color-gryt-* tokens in ${src}. Did @gryt/ui change shape?`);
+}
+
+// Every var() needs a definition in the same file, or the console renders with no colour.
+// verify does not look at the account theme and the check above only fires on zero tokens.
+const defined = new Set(tokens.map((t) => t.match(/--([a-z0-9-]+):/)[1]));
+const missing = [
+  ...new Set(
+    tokens.flatMap((t) => [...t.matchAll(/var\(--([a-z0-9-]+)\)/g)].map((m) => m[1])),
+  ),
+].filter((name) => !defined.has(name));
+
+if (missing.length > 0) {
+  throw new Error(
+    `${missing.length} token(s) referenced but not defined: ${missing.join(", ")}. ` +
+      `Did @gryt/ui change the shape of its token file?`,
+  );
 }
 
 writeFileSync(
