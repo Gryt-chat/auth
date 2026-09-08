@@ -102,10 +102,29 @@ export function Form() {
                 <div className="gryt-auth-row">
                     {kcContext.realm.rememberMe && !kcContext.usernameHidden && (
                         <label className="gryt-auth-remember">
+                            {/*
+                             * Ticked unless somebody unticks it.
+                             *
+                             * Without it Keycloak's identity cookie is a
+                             * browser-session cookie, so closing the browser
+                             * signs you out of every Gryt app at once however
+                             * long the realm's SSO limits are — and the desktop
+                             * client, which sends people out to this page in
+                             * their own browser, then asks for the password
+                             * again right after they signed in on the web.
+                             *
+                             * `login.rememberMe` is only set when Keycloak is
+                             * re-rendering the form with an answer already
+                             * given, so this defaults without overriding one.
+                             */}
                             <Checkbox
                                 id="rememberMe"
                                 name="rememberMe"
-                                defaultChecked={!!kcContext.login.rememberMe}
+                                defaultChecked={
+                                    kcContext.login.rememberMe !== undefined
+                                        ? !!kcContext.login.rememberMe
+                                        : true
+                                }
                             />
                             {msg("rememberMe")}
                         </label>
