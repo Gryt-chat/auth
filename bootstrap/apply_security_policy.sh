@@ -69,6 +69,9 @@ PASSWORD_POLICY="${GRYT_KC_PASSWORD_POLICY:-length(4) and notUsername and notEma
 # sign-in and answer nothing the counter does not. REFRESH_TOKEN is worse again:
 # 60,543 of those against 58 logins.
 EVENTS_EXPIRATION="${GRYT_KC_EVENTS_EXPIRATION_SECONDS:-2592000}"
+# Set to 0 only if something else already limits the admin realm.
+APPLY_TO_MASTER="${GRYT_KC_APPLY_TO_MASTER:-1}"
+
 EVENT_TYPES="${GRYT_KC_EVENT_TYPES:-LOGIN_ERROR REGISTER_ERROR RESET_PASSWORD_ERROR CODE_TO_TOKEN_ERROR REFRESH_TOKEN_ERROR}"
 
 # Admin events stay off. Sivert is the only admin, so they would record one
@@ -201,4 +204,57 @@ log "failed-event log on: ${EVENT_TYPES}, kept ${EVENTS_EXPIRATION}s"
 # GRYT-782 put a Cloudflare Managed Challenge in front of the registration path,
 # where this script cannot see it. Read literally, the old wording sent people
 # off to buy reCAPTCHA keys for something already partly covered.
+# The master realm, which until GRYT-1080 had none of the above.
+#
+# Everything so far applies to ${REALM}, which is `gryt`. Master is a different
+# realm and inherits nothing, so the admin plane -- the one account that can
+# reconfigure every other realm -- accepted unlimited password guesses while end
+# users were limited to eight.
+#
+# Cloudflare restricts /admin on auth.gryt.chat to Norway, so this was never open
+# to the whole internet. It is not a lockout either: a Norwegian address, or any
+# VPN with a Norwegian exit, reaches Keycloak and gets to keep guessing.
+#
+# Same numbers as the gryt realm rather than stricter ones. Tempting to lock
+# harder on the admin realm, but the account is reachable by name, so a short
+# lockout somebody can trigger deliberately is the safer trade -- the same
+# reasoning as permanentLockout above, and it matters more here, because locking
+# this account out locks everybody out of fixing it.
+#
+# No password policy. It is only checked when a password is set, so it would do
+# nothing for the existing one and could block a passphrase Sivert wants.
+if [ "${APPLY_TO_MASTER}" = "1" ]; then
+  cat > /tmp/master-policy.json <<JSON
+{
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": ${FAILURE_FACTOR},
+  "waitIncrementSeconds": ${WAIT_INCREMENT},
+  "maxFailureWaitSeconds": ${MAX_WAIT},
+  "maxDeltaTimeSeconds": ${MAX_DELTA},
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60
+}
+JSON
+
+  code=$(curl -sS -o /tmp/master-put.out -w '%{http_code}' -X PUT \
+    -H "Authorization: Bearer ${token}" \
+    -H "Content-Type: application/json" \
+    --data-binary @/tmp/master-policy.json \
+    "${KC_URL}/admin/realms/master")
+  if [ "${code}" != "204" ] && [ "${code}" != "200" ]; then
+    log "ERROR: PUT /admin/realms/master returned ${code}."
+    cat /tmp/master-put.out
+    exit 1
+  fi
+
+  current=$(curl -sS -H "Authorization: Bearer ${token}" "${KC_URL}/admin/realms/master")
+  master_brute=$(field bruteForceProtected)
+  if [ "${master_brute}" != "true" ]; then
+    log "ERROR: bruteForceProtected did not take effect on master (got '${master_brute}')."
+    exit 1
+  fi
+  log "master realm brute-force protection on: same ${FAILURE_FACTOR}/${WAIT_INCREMENT}s/${MAX_WAIT}s as ${REALM}"
+fi
+
 log "note: no captcha in the Keycloak flow. On gryt.chat the challenge is at the edge; see the README before adding one."
