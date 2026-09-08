@@ -57,9 +57,11 @@ while [ "${n}" -lt 10 ]; do
       log "ERROR: '${ADMIN_USER}' exists but is disabled. Retrying will not help."
       log "       On gryt.chat that account is disabled on purpose. Make a temporary"
       log "       admin instead -- it needs no restart and leaves '${ADMIN_USER}' alone:"
-      log "         docker exec -e PW=... <keycloak container> \\"
-      log "           /opt/keycloak/bin/kc.sh bootstrap-admin user \\"
+      log "         docker exec -e PW=... -e KC_HTTP_MANAGEMENT_PORT=9999 \\"
+      log "           <keycloak container> /opt/keycloak/bin/kc.sh bootstrap-admin user \\"
       log "           --username tmpadmin --password:env PW --no-prompt"
+      log "       KC_HTTP_MANAGEMENT_PORT matters: bootstrap-admin starts its own"
+      log "       runtime, and 9000 is taken by the Keycloak already running."
       log "       Then re-run this with GRYT_KEYCLOAK_ADMIN_USERNAME=tmpadmin, and"
       log "       delete the user afterwards. See the README."
       exit 1
