@@ -120,6 +120,12 @@ services:
         condition: service_healthy
     environment:
       DATA_SOURCE_NAME: "postgresql://${GRYT_AUTH_POSTGRES_USER:-keycloak}:${GRYT_AUTH_POSTGRES_PASSWORD:-keycloak}@postgres:5432/${GRYT_AUTH_POSTGRES_DB:-keycloak}?sslmode=disable"
+      # Account and activity counts (GRYT-1082). The flag is marked DEPRECATED in
+      # v0.16.0 and still works; the replacement collector API has no way to
+      # express a custom query yet, so there is nothing to move to.
+      PG_EXPORTER_EXTEND_QUERY_PATH: /etc/postgres-exporter/keycloak-queries.yaml
+    volumes:
+      - ./monitoring/keycloak-queries.yaml:/etc/postgres-exporter/keycloak-queries.yaml:ro
     networks:
       - gryt-auth-network
     restart: unless-stopped

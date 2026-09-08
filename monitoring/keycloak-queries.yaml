@@ -1,0 +1,103 @@
+# Account and activity counts for the postgres-exporter, so "how many people use
+# Gryt" has an answer that is not a psql shell (GRYT-1082).
+#
+# Nothing here collects anything. Keycloak already keeps these rows to run
+# sessions at all, and last_session_refresh is a timestamp it maintains whether
+# or not anybody reads it. No IP addresses, no per-user output -- every query
+# aggregates to a count before it leaves the database.
+#
+# Every query joins realm on name rather than filtering realm_id against a
+# string. realm_id is a UUID, and offline_user_session holds ids for realms that
+# no longer exist -- 45 of 97 rows on 2026-09-08. A filter that looks reasonable
+# and skips the join counts those too, which is how the first numbers reported
+# for this were wrong.
+
+gryt_keycloak_accounts:
+  query: |
+    SELECT
+      r.name                                              AS realm,
+      count(*)::float                                     AS registered,
+      count(*) FILTER (WHERE u.enabled)::float            AS enabled,
+      count(*) FILTER (WHERE u.email_verified)::float     AS verified
+    FROM user_entity u
+    JOIN realm r ON r.id = u.realm_id
+    GROUP BY r.name
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - registered:
+        usage: "GAUGE"
+        description: "Accounts that exist in this realm"
+    - enabled:
+        usage: "GAUGE"
+        description: "Accounts not disabled"
+    - verified:
+        usage: "GAUGE"
+        description: "Accounts with a verified email address"
+
+# What "active" means here, because the number gets quoted: a client is holding
+# an offline token and refreshed it inside the window. That is closer to "the app
+# is installed and signed in" than to "this person used Gryt today", and it misses
+# anyone who signs in without an offline token. Honest for what it measures; not
+# the same thing as an active user.
+gryt_keycloak_active_users:
+  query: |
+    SELECT
+      r.name AS realm,
+      count(DISTINCT s.user_id) FILTER (
+        WHERE s.last_session_refresh > extract(epoch FROM now()) - 86400)::float   AS day,
+      count(DISTINCT s.user_id) FILTER (
+        WHERE s.last_session_refresh > extract(epoch FROM now()) - 604800)::float  AS week,
+      count(DISTINCT s.user_id) FILTER (
+        WHERE s.last_session_refresh > extract(epoch FROM now()) - 2592000)::float AS month,
+      count(DISTINCT s.user_id)::float                                             AS ever
+    FROM offline_user_session s
+    JOIN realm r ON r.id = s.realm_id
+    GROUP BY r.name
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - day:
+        usage: "GAUGE"
+        description: "Distinct users whose session refreshed in the last 24 hours"
+    - week:
+        usage: "GAUGE"
+        description: "Distinct users whose session refreshed in the last 7 days"
+    - month:
+        usage: "GAUGE"
+        description: "Distinct users whose session refreshed in the last 30 days"
+    - ever:
+        usage: "GAUGE"
+        description: "Distinct users holding any offline session"
+
+gryt_keycloak_sessions:
+  query: |
+    SELECT
+      r.name AS realm,
+      count(*)::float AS offline
+    FROM offline_user_session s
+    JOIN realm r ON r.id = s.realm_id
+    GROUP BY r.name
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - offline:
+        usage: "GAUGE"
+        description: "Offline sessions held in this realm"
+
+# Sessions pointing at a realm that is gone. Harmless to Keycloak, and the reason
+# every count above joins rather than filters. Worth a graph because a number
+# that climbs means something is deleting realms without cleaning up after them.
+gryt_keycloak_orphan:
+  query: |
+    SELECT count(*)::float AS sessions
+    FROM offline_user_session s
+    LEFT JOIN realm r ON r.id = s.realm_id
+    WHERE r.id IS NULL
+  metrics:
+    - sessions:
+        usage: "GAUGE"
+        description: "Offline sessions whose realm no longer exists"
