@@ -36,6 +36,12 @@ gryt_keycloak_accounts:
         usage: "GAUGE"
         description: "Accounts with a verified email address"
 
+# There is no window past 30 days here, and there cannot be. The realm sets
+# offlineSessionIdleTimeout to 2592000, so Keycloak deletes an offline session
+# once it has been idle that long and the row stops existing. A 90-day gauge
+# would return the same number as the 30-day one forever, which is why there
+# isn't one. Measured 2026-09-08: 30d, 90d, 365d and "ever" were all 29.
+#
 # What "active" means here, because the number gets quoted: a client is holding
 # an offline token and refreshed it inside the window. That is closer to "the app
 # is installed and signed in" than to "this person used Gryt today", and it misses
@@ -71,6 +77,101 @@ gryt_keycloak_active_users:
     - ever:
         usage: "GAUGE"
         description: "Distinct users holding any offline session"
+
+# New accounts in trailing windows. The totals above are levels -- how many
+# exist, how many checked in -- and neither says whether the number is moving.
+#
+# Trailing windows answer "is it moving right now". They do not show the shape,
+# so gryt_keycloak_signups_by_month below carries one series per calendar month.
+#
+# An earlier version of this comment rejected that as unbounded label growth.
+# That was wrong at this scale: twelve series a year, sixty after five years,
+# against a realm that adds about eighteen accounts a month. It is the only way
+# to see a year against another year, which is the whole point.
+#
+# These do go past 30 days, unlike the activity gauges. created_timestamp is a
+# column on a row that is never deleted, so the window is a real choice here.
+gryt_keycloak_signups:
+  query: |
+    SELECT
+      r.name AS realm,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 86400)   * 1000)::float AS day,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 604800)  * 1000)::float AS week,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 2592000) * 1000)::float AS month,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 7776000) * 1000)::float AS quarter
+    FROM user_entity u
+    JOIN realm r ON r.id = u.realm_id
+    GROUP BY r.name
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - day:
+        usage: "GAUGE"
+        description: "Accounts created in the last 24 hours"
+    - week:
+        usage: "GAUGE"
+        description: "Accounts created in the last 7 days"
+    - month:
+        usage: "GAUGE"
+        description: "Accounts created in the last 30 days"
+    - quarter:
+        usage: "GAUGE"
+        description: "Accounts created in the last 90 days"
+
+# Signups per calendar month, for as far back as the realm goes.
+#
+# This is the historical view, and it is the only one that survives a wipe of
+# Prometheus: it is recomputed from user_entity on every scrape rather than
+# accumulated. Activity cannot do the same -- offline sessions are deleted after
+# 30 days idle, so there is no history to recompute from, only what Prometheus
+# has recorded since retention was extended.
+#
+# Measured 2026-09-08: 2026-02 20, 2026-03 144, 2026-04 19, 2026-05 20,
+# 2026-06 16, 2026-07 17, 2026-08 19, 2026-09 9. The 144 is the LAN party.
+gryt_keycloak_signups_by_month:
+  query: |
+    SELECT
+      r.name AS realm,
+      to_char(to_timestamp(u.created_timestamp / 1000), 'YYYY-MM') AS month,
+      count(*)::float AS accounts
+    FROM user_entity u
+    JOIN realm r ON r.id = u.realm_id
+    GROUP BY r.name, 2
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - month:
+        usage: "LABEL"
+        description: "Calendar month the accounts were created in, YYYY-MM"
+    - accounts:
+        usage: "GAUGE"
+        description: "Accounts created in that calendar month"
+
+gryt_keycloak_signups_by_year:
+  query: |
+    SELECT
+      r.name AS realm,
+      to_char(to_timestamp(u.created_timestamp / 1000), 'YYYY') AS year,
+      count(*)::float AS accounts
+    FROM user_entity u
+    JOIN realm r ON r.id = u.realm_id
+    GROUP BY r.name, 2
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - year:
+        usage: "LABEL"
+        description: "Calendar year the accounts were created in"
+    - accounts:
+        usage: "GAUGE"
+        description: "Accounts created in that calendar year"
 
 gryt_keycloak_sessions:
   query: |
