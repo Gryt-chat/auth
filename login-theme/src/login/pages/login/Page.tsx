@@ -1,8 +1,6 @@
 /**
- * This file has been claimed for ownership from @keycloakify/login-ui version 250004.7.2.
- * To relinquish ownership and restore this file to its original content, run the following command:
- * 
- * $ npx keycloakify own --path "login/pages/login/Page.tsx" --revert
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. Rebuilt on @gryt/ui.
  */
 
 import { assert } from "tsafe/assert";

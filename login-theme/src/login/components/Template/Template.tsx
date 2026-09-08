@@ -1,14 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/components/Template/Template.tsx" --revert
- *
- * The page shell every login-theme page renders through.
- *
- * Rebuilt on @gryt/ui so the sign-in pages are the same design system as the
- * client, rather than PatternFly with Gryt colours painted over it. The DOM ids
- * Keycloak's own scripts and docs refer to (kc-page-title, kc-content,
- * kc-select-try-another-way-form) are kept — they are an interface, not
- * decoration.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The kc-* DOM ids stay: they are an interface, not decoration.
  */
 
 import { Alert, Button } from "@gryt/ui";

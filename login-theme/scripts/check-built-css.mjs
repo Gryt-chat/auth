@@ -1,17 +1,6 @@
 /**
- * Asserts every class gryt.css styles is still in the CSS the build emits.
- *
- * The lint config next door explains the bug this pair exists for: a rule
- * missing its closing brace nested the rest of the file inside a `::marker`,
- * and the bundler dropped 245 lines without saying anything. stylelint catches
- * that one, because an unclosed block is a syntax error.
- *
- * This catches the same *outcome* from a cause that is not a syntax error —
- * a mis-typed media query, a nesting mistake that parses fine, a bundler
- * upgrade that changes what survives. Those all look like the build working.
- *
- * It maintains itself: the expected list is read out of the source every run,
- * so deleting a rule on purpose needs nothing done here.
+ * Asserts every class gryt.css styles is still in the CSS the build emits — the same outcome
+ * stylelint catches, from causes that are not syntax errors. The expected list is read.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";

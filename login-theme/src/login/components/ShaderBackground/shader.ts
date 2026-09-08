@@ -1,18 +1,6 @@
 /**
- * The background shader.
- *
- * Kept in its own file on purpose: the whole look of the page background is
- * this one string, so changing it later means editing here and nothing else.
- * Nothing outside reads it apart from ShaderBackground.tsx.
- *
- * Colours are @gryt/ui's, converted to 0-1 floats because GLSL has no idea what
- * a hex triplet is:
- *   #111318 background   -> vec3(0.067, 0.075, 0.094)
- *   #968ff8 accent       -> vec3(0.588, 0.561, 0.973)
- *   #7dd3fc secondary    -> vec3(0.490, 0.827, 0.988)
- *
- * If those tokens ever move, these move with them — there is no import that
- * would catch the drift for us.
+ * The background shader, in its own file so the whole look is one string. The colours are
+ * @gryt/ui's as 0-1 floats; if those tokens move, nothing here catches the drift.
  */
 
 /** A fullscreen triangle. No transforms; the fragment shader does the work. */

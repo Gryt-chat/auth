@@ -1,21 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login-config-totp/Page.tsx" --revert
- *
- * Setting up an authenticator app. Reachable because CONFIGURE_TOTP is an
- * enabled required action.
- *
- * The only page in the theme that is instructions rather than a form with a
- * heading. It has three numbered steps, a QR code, and a way to swap that for a
- * secret you can type — none of which the page CSS had vocabulary for, so it
- * rendered as a browser-default <ol> with an unframed image in the middle.
- *
- * The structure is Keycloak's and stays: the same steps in the same order, the
- * same manual/barcode swap, and `totp`, `totpSecret`, `mode` and `userLabel`
- * posted under the names it expects. What changes is that the steps look like
- * steps, the QR code gets a light surface to sit on so it reads as a thing to
- * point a camera at, and the secret is set in mono and selectable — it is meant
- * to be copied.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. `totp`, `totpSecret`, `mode` and `userLabel` post under those names.
  */
 
 import { Button, TextField } from "@gryt/ui";

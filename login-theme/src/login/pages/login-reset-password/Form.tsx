@@ -1,9 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login-reset-password/Form.tsx" --revert
- *
- * Rebuilt on @gryt/ui. Field names and ids are Keycloak's contract; only the
- * rendering changed.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. Field names and ids are Keycloak's contract.
  */
 
 import { Button, TextField } from "@gryt/ui";

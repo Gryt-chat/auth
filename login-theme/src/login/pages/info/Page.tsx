@@ -1,16 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/info/Page.tsx" --revert
- *
- * The page every flow lands on when it ends without a session — email verified,
- * password changed, action completed. Keycloak reuses one page for all of them
- * and puts the specifics in `message`, so there is nothing to write here beyond
- * getting out of the way of it.
- *
- * What changes: the one link out becomes a button, since it is the only thing on
- * the page. Which link that is stays exactly as the original decided —
- * pageRedirectUri, then actionUri, then the client's base URL — because that
- * order encodes where Keycloak thinks you were going.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The link order is the original's: pageRedirectUri, then actionUri.
  */
 
 import { Button } from "@gryt/ui";

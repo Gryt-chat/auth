@@ -1,19 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login-update-password/Page.tsx" --revert
- *
- * Where a password reset link lands, and where the UPDATE_PASSWORD required
- * action sends somebody. Both are enabled on this realm.
- *
- * Rebuilt on @gryt/ui, matching the sign-in page: TextField carries its own
- * label and error, rather than the original's label wrapper, input wrapper and
- * hand-rolled error span per field. PasswordWrapper is dropped for the same
- * reason the sign-in page dropped it — TextField type="password" is the house
- * pattern, and a reveal toggle beside a field nobody is reading twice is noise.
- *
- * Field ids and names are Keycloak's contract and are unchanged: it posts
- * `password-new` and `password-confirm`, and reports errors under `password`
- * and `password-confirm`.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. It posts `password-new` and `password-confirm`.
  */
 
 import { Button, TextField } from "@gryt/ui";

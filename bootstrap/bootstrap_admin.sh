@@ -1,24 +1,6 @@
 #!/usr/bin/env bash
-# Makes sure the master realm has an administrator.
-#
-# KC_BOOTSTRAP_ADMIN_USERNAME/PASSWORD on the `keycloak` service only creates one
-# when `start` finds no master realm. keycloak-import runs `kc.sh import` first,
-# and that creates master as a side effect — so on a genuinely fresh database the
-# admin is never created and the deployment comes up with no way in, and no way
-# for keycloak-user-profile to do its job either. Nothing noticed, because every
-# existing deployment predates the import service.
-#
-# `kc.sh bootstrap-admin user` does the same job as a separate offline step
-# against the same database.
-#
-# It cannot be trusted to report itself: on a second run it exits 0 while logging
-# a unique-constraint violation and "KC-SERVICES0010: Failed to add user". So the
-# output is what gets read, not the exit code.
-#
-# Deliberately does not fail the stack on an unrecognised outcome — `keycloak`
-# waits for this to complete, and a Keycloak that will not start is worse than an
-# admin whose state we are unsure of. keycloak-user-profile needs a working admin
-# a few seconds later and does fail loudly, so nothing stays quiet for long.
+# Makes sure the master realm has an administrator: `kc.sh import` creates master as a side
+# effect, so the env vars never fire. It exits 0 on failure, so the output is what is read.
 set -uo pipefail
 
 USER_NAME="${GRYT_KEYCLOAK_ADMIN_USERNAME:-}"

@@ -1,17 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/webauthn-error/Page.tsx" --revert
- *
- * Where a passkey lands when the browser refuses — cancelled prompt, no
- * matching credential, an authenticator that will not talk. Reachable because
- * the browser flow offers webauthn-authenticator-passwordless.
- *
- * The retry mechanism is Keycloak's and is kept verbatim: the button fills two
- * hidden inputs and submits the form beside it. That is not a pattern worth
- * improving here — the values it writes are what tell the flow which execution
- * to re-run, and the `@ts-expect-error`s below are the original's, kept because
- * the DOM lookups genuinely can return null and Keycloak's code assumes they
- * cannot.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The retry button fills two hidden inputs and submits, verbatim.
  */
 
 import { Button } from "@gryt/ui";

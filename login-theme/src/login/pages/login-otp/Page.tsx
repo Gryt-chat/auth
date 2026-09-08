@@ -1,20 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login-otp/Page.tsx" --revert
- *
- * Entering a code from an authenticator app. Reachable because CONFIGURE_TOTP is
- * an enabled required action.
- *
- * Two things were wrong with the original once doUseDefaultCss went false. The
- * credential picker rendered as bare radio inputs with their labels beside them
- * — literally "label1 label2" in the mock — because every class it relied on
- * resolved to nothing. And the code itself was a plain text input, which is the
- * one field in this theme where that is a waste: a fixed-length code pasted from
- * a password manager or typed from a phone is exactly what OtpField is for.
- *
- * `otp` is the name Keycloak posts and OtpField carries it, and errors still
- * report under `totp`, which is a different key for the same thing and is not
- * something to tidy — it is the contract.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. `otp` is what Keycloak posts; errors report under `totp`.
  */
 
 import { Button, OtpField, Radio, RadioGroup } from "@gryt/ui";

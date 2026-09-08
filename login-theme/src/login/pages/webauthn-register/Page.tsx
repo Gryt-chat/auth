@@ -1,20 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/webauthn-register/Page.tsx" --revert
- *
- * Adding a passkey. Reachable because webauthn-register-passwordless is an
- * enabled required action on this realm.
- *
- * The button stays outside <form id="register"> exactly as the original had it,
- * and stays type="submit" with that id — useScript looks it up by id, and the
- * script is what calls navigator.credentials.create and fills the hidden inputs
- * before anything is posted. Moving it inside the form would let a browser
- * submit it before the credential exists.
- *
- * The original also put a bare <span> for a key icon inside the page title,
- * styled by a kcClsx class that resolves to nothing here — so it rendered as an
- * empty inline element ahead of the heading text. Dropped rather than replaced:
- * the heading already says what the page is.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The button stays outside the form, type="submit", with that id.
  */
 
 import { Button } from "@gryt/ui";

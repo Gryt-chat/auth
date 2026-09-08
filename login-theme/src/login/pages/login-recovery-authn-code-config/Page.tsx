@@ -1,26 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login-recovery-authn-code-config/Page.tsx" --revert
- *
- * The one-time codes that get somebody back in when the authenticator is gone.
- *
- * Reachable only once `recovery-codes` is in KC_FEATURES and the
- * CONFIGURE_RECOVERY_AUTHN_CODES required action is registered — both in this
- * PR. Keycloak keeps it behind a flag on 26.5.
- *
- * Two things here are not just restyling.
- *
- * The confirmation checkbox used to reach for the submit button by id and set
- * `.disabled` on it, with an `@ts-expect-error` over the line because the DOM
- * lookup is typed as possibly null. It is React state now, so the button is
- * disabled because the checkbox is unchecked rather than because a side effect
- * got there first.
- *
- * `useScript` is kept, and so are the element ids it binds to —
- * `kc-recovery-codes-list`, `printRecoveryCodes`, `downloadRecoveryCodes`,
- * `copyRecoveryCodes`. It attaches click handlers by id after mount, so renaming
- * any of them silently removes print, download or copy. Those are the only way
- * off this page with the codes, and the page is shown exactly once.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. `useScript` binds print, download and copy by element id.
  */
 
 import { Alert, Button } from "@gryt/ui";

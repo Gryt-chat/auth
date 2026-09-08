@@ -1,13 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/components/PasswordWrapper.tsx" --revert
- *
- * The reveal toggle beside a password field.
- *
- * The original renders a Font Awesome <i> for the eye icon. That icon font
- * arrived with PatternFly, which this theme no longer loads, so it rendered as
- * an empty pill. Phosphor instead — the same icon set @gryt/ui itself uses,
- * imported directly rather than through a wrapper library.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. Phosphor, not Font Awesome: PatternFly's icon font is gone.
  */
 
 import { IconButton } from "@gryt/ui";

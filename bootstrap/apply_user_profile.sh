@@ -1,24 +1,6 @@
 #!/bin/sh
-# Applies the realm's declarative User Profile.
-#
-# Why this is a separate one-shot container rather than part of the realm import:
-#
-#   - A "userProfile" block inside gryt-realm.json is not importable. Keycloak
-#     rejects the realm and the whole auth stack fails to come up (GRYT-136).
-#   - import_realm.sh runs `kc.sh import` *before* Keycloak starts, so it has no
-#     admin API to call. The endpoint used here only exists on a running server.
-#
-# Without it the realm falls back to Keycloak's built-in profile, which marks
-# firstName and lastName required. The realm sets registrationEmailAsUsername,
-# and the Gryt login theme hides both name fields, so registration is rejected
-# on inputs nobody can see and the failure is silent (GRYT-180). Production
-# already runs a profile that collects email only; this is what puts every other
-# deployment in the same state.
-#
-# Safe to re-run: the PUT is idempotent, and it has to run after every realm
-# import, because `--override true` deletes the realm and takes the profile
-# with it. The flip side is that this file is the source of truth — an edit made
-# in the admin console is reverted on the next `up`.
+# The realm's declarative User Profile, through the admin API: a "userProfile" block inside
+# gryt-realm.json is not importable and takes the stack down (GRYT-136). Re-run after imports.
 set -eu
 
 KC_URL="${KC_URL:-http://keycloak:8080}"
@@ -88,9 +70,8 @@ if [ "${code}" != "200" ]; then
   exit 1
 fi
 
-# Read it back rather than trusting the 200. Comparing the set of names, rather
-# than looking for firstName specifically, means this keeps checking the right
-# thing if the file changes later.
+# Read it back rather than trusting the 200. Comparing the set of names rather than looking
+# for firstName means this keeps checking the right thing if the file changes.
 names() { tr -d ' \n\t' | tr ',' '\n' | sed -n 's/.*"name":"\([^"]*\)".*/\1/p' | sort -u | tr '\n' ' '; }
 
 want=$(names < "${PROFILE_FILE}")
