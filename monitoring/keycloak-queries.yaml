@@ -1,16 +1,5 @@
-# Account and activity counts for the postgres-exporter, so "how many people use
-# Gryt" has an answer that is not a psql shell (GRYT-1082).
-#
-# Nothing here collects anything. Keycloak already keeps these rows to run
-# sessions at all, and last_session_refresh is a timestamp it maintains whether
-# or not anybody reads it. No IP addresses, no per-user output -- every query
-# aggregates to a count before it leaves the database.
-#
-# Every query joins realm on name rather than filtering realm_id against a
-# string. realm_id is a UUID, and offline_user_session holds ids for realms that
-# no longer exist -- 45 of 97 rows on 2026-09-08. A filter that looks reasonable
-# and skips the join counts those too, which is how the first numbers reported
-# for this were wrong.
+# Account and activity counts for the postgres-exporter (GRYT-1082). Every query joins realm
+# on name rather than filtering realm_id: 45 of 97 offline rows point at realms that are gone.
 
 gryt_keycloak_accounts:
   query: |
@@ -36,17 +25,8 @@ gryt_keycloak_accounts:
         usage: "GAUGE"
         description: "Accounts with a verified email address"
 
-# There is no window past 30 days here, and there cannot be. The realm sets
-# offlineSessionIdleTimeout to 2592000, so Keycloak deletes an offline session
-# once it has been idle that long and the row stops existing. A 90-day gauge
-# would return the same number as the 30-day one forever, which is why there
-# isn't one. Measured 2026-09-08: 30d, 90d, 365d and "ever" were all 29.
-#
-# What "active" means here, because the number gets quoted: a client is holding
-# an offline token and refreshed it inside the window. That is closer to "the app
-# is installed and signed in" than to "this person used Gryt today", and it misses
-# anyone who signs in without an offline token. Honest for what it measures; not
-# the same thing as an active user.
+# No window past 30 days, and there cannot be: offlineSessionIdleTimeout deletes the row.
+# "Active" means a client holding an offline token refreshed it — not an active user.
 gryt_keycloak_active_users:
   query: |
     SELECT
@@ -78,19 +58,8 @@ gryt_keycloak_active_users:
         usage: "GAUGE"
         description: "Distinct users holding any offline session"
 
-# New accounts in trailing windows. The totals above are levels -- how many
-# exist, how many checked in -- and neither says whether the number is moving.
-#
-# Trailing windows answer "is it moving right now". They do not show the shape,
-# so gryt_keycloak_signups_by_month below carries one series per calendar month.
-#
-# An earlier version of this comment rejected that as unbounded label growth.
-# That was wrong at this scale: twelve series a year, sixty after five years,
-# against a realm that adds about eighteen accounts a month. It is the only way
-# to see a year against another year, which is the whole point.
-#
-# These do go past 30 days, unlike the activity gauges. created_timestamp is a
-# column on a row that is never deleted, so the window is a real choice here.
+# New accounts in trailing windows, which say whether the number is moving. These do go past
+# 30 days: created_timestamp is on a row that is never deleted.
 gryt_keycloak_signups:
   query: |
     SELECT
@@ -123,16 +92,8 @@ gryt_keycloak_signups:
         usage: "GAUGE"
         description: "Accounts created in the last 90 days"
 
-# Signups per calendar month, for as far back as the realm goes.
-#
-# This is the historical view, and it is the only one that survives a wipe of
-# Prometheus: it is recomputed from user_entity on every scrape rather than
-# accumulated. Activity cannot do the same -- offline sessions are deleted after
-# 30 days idle, so there is no history to recompute from, only what Prometheus
-# has recorded since retention was extended.
-#
-# Measured 2026-09-08: 2026-02 20, 2026-03 144, 2026-04 19, 2026-05 20,
-# 2026-06 16, 2026-07 17, 2026-08 19, 2026-09 9. The 144 is the LAN party.
+# Signups per calendar month, recomputed from user_entity on every scrape, so it is the only
+# view that survives a wipe of Prometheus. Activity has no history to recompute from.
 gryt_keycloak_signups_by_month:
   query: |
     SELECT
@@ -189,9 +150,8 @@ gryt_keycloak_sessions:
         usage: "GAUGE"
         description: "Offline sessions held in this realm"
 
-# Sessions pointing at a realm that is gone. Harmless to Keycloak, and the reason
-# every count above joins rather than filters. Worth a graph because a number
-# that climbs means something is deleting realms without cleaning up after them.
+# Sessions pointing at a realm that is gone: harmless, and the reason every count above joins
+# rather than filters. A number that climbs means something deletes realms without cleanup.
 gryt_keycloak_orphan:
   query: |
     SELECT count(*)::float AS sessions

@@ -36,3 +36,14 @@ jobs:
 
       # Not `typecheck`: it covers the vendored pages, and one ships an unused
       # @ts-expect-error that fails under our settings. package.json says the same.
+
+  # No comment runs past two lines. Its own job because the one above is pinned to
+  # login-theme, and this reads the whole repository.
+  comments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/check-comment-length.mjs
