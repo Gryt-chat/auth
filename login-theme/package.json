@@ -16,10 +16,12 @@
     "_comment_verify": "What CI runs. The build is not just a smoke test: check-built-css compares the classes gryt.css styles against the ones that survive into the bundle, because the bug this exists for exited 0 and dropped a third of the file.",
     "typecheck": "tsc -b",
     "account-tokens": "node scripts/account-tokens.mjs",
-    "_comment_account_tokens": "Rewrites the account console's palette from @gryt/ui's own token file. The account theme is a directory under ../themes rather than a Keycloakify build \u2014 @keycloakify/keycloak-account-ui peers on React 18 and PatternFly 5 and this package is on React 19 \u2014 so it cannot import @gryt/ui and would otherwise restate the palette. Run this after bumping @gryt/ui.",
+    "_comment_account_tokens": "Rewrites the account console's palette from @gryt/ui's own token file. The account theme is a directory under ../themes rather than a Keycloakify build — @keycloakify/keycloak-account-ui peers on React 18 and PatternFly 5 and this package is on React 19 — so it cannot import @gryt/ui and would otherwise restate the palette. Run this after bumping @gryt/ui.",
     "build-keycloak-theme": "npm run build && keycloakify build",
     "storybook": "keycloakify start-keycloak",
-    "postinstall": "keycloakify sync-extensions"
+    "postinstall": "keycloakify sync-extensions",
+    "admin-tokens": "node scripts/admin-tokens.mjs",
+    "_comment_admin_tokens": "Rewrites the admin console's palette from @gryt/theme's OLED preset. Separate from account-tokens because the admin console is deliberately a different palette: the account console matches the login page users see, and this one is true black. Run it after bumping @gryt/theme."
   },
   "dependencies": {
     "@gryt/ui": "^0.4.0",
@@ -31,6 +33,7 @@
     "tsafe": "^1.8.5"
   },
   "devDependencies": {
+    "@gryt/theme": "^0.11.0",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
