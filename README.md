@@ -135,6 +135,49 @@ Managed Challenge weighs reputation rather than volume. So nothing stops a slow 
 ordinary-looking addresses. Fixing that means a Cloudflare rate-limiting rule on the
 registration path, not a change in here.
 
+## Monitoring and alerts
+
+Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails
+`GRYT_ALERT_EMAIL` when a rule fires. Grafana is the only one with a public address:
+
+| | Where | Public |
+|---|---|---|
+| Grafana | [monitoring.gryt.chat](https://monitoring.gryt.chat) | yes |
+| Prometheus | `127.0.0.1:19090` on the box | no |
+| Alertmanager | `127.0.0.1:19093` on the box | no |
+
+**The "View in Alertmanager" link in an alert email points at `http://localhost:19093`.**
+That is deliberate. Alertmanager has no public route, and without `--web.external-url` it
+advertises its own container id instead — `http://8d18958c298e:9093`, which resolves
+nowhere at all.
+
+To make that link work, open a tunnel first and leave it running:
+
+```bash
+ssh -N -L 19093:127.0.0.1:19093 edition35
+```
+
+Then the URL in the email opens the real Alertmanager. Same shape for Prometheus on 19090
+if you want to check why a rule fired.
+
+Most alerts do not need any of that. The email carries the summary, the description and
+every label, and the auth dashboard on monitoring.gryt.chat covers the rest. The tunnel is
+for silencing an alert or reading its history.
+
+To prove the whole path still works without waiting for something to break:
+
+```bash
+ssh edition35 'docker run --rm --network auth_gryt-auth-network curlimages/curl:8.11.1 \
+  -s -o /dev/null -w "%{http_code}\n" -X POST -H "Content-Type: application/json" \
+  -d "[{\"labels\":{\"alertname\":\"DeliveryTest\"},\"annotations\":{\"summary\":\"Ignore me\"}}]" \
+  http://alertmanager:9093/api/v2/alerts'
+```
+
+It sends within `group_wait`, 30 seconds. Check it landed with
+`alertmanager_notifications_total{integration="email"}` on the Alertmanager metrics
+endpoint; it was 0 until the first deliberate test on 2026-09-08, which is how long that
+last hop went unproven.
+
 ## Themes
 
 Three of them, and they are built three different ways because they are three different
