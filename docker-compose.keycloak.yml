@@ -143,8 +143,26 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+      # Named, because the image declares VOLUME /prometheus and Compose was
+      # therefore giving this an anonymous one. Those survive a restart and are
+      # orphaned by `down`, so every teardown silently started history over and
+      # left the old volume behind holding several hundred MB.
+      - gryt-auth-prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      # Default retention is 15d, which is shorter than the 30-day window the
+      # activity gauges measure -- the history of a month-long measure was being
+      # dropped at two weeks.
+      #
+      # Measured 2026-09-08: 592 MB for 15 days, so about 39 MB a day and 14 GB
+      # a year at the current scrape set. The box had 271 GB free.
+      #
+      # The size cap is the one that matters. A full disk takes the auth database
+      # down with it, and time-based retention alone has no ceiling if the number
+      # of series grows. Whichever limit is reached first wins, so the time value
+      # can be generous.
+      - "--storage.tsdb.retention.time=${GRYT_PROMETHEUS_RETENTION_TIME:-5y}"
+      - "--storage.tsdb.retention.size=${GRYT_PROMETHEUS_RETENTION_SIZE:-50GB}"
     networks:
       - gryt-auth-network
     restart: unless-stopped
@@ -534,6 +552,7 @@ networks:
     driver: bridge
 
 volumes:
+  gryt-auth-prometheus-data:
   gryt-auth-postgres-data:
   gryt-auth-grafana-data:
   gryt-identity-data:

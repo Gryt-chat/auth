@@ -416,6 +416,29 @@
         { "expr": "sum(gryt_keycloak_signups_quarter{realm=~\"$realm\"})", "legendFormat": "90d" }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "barchart",
+      "title": "Signups by month",
+      "description": "Recomputed from user_entity on every scrape, so it goes back to the first account and survives a Prometheus wipe. Activity cannot do this - offline sessions are deleted after 30 days idle, so there is nothing to recompute from.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 69 },
+      "targets": [
+        { "expr": "sum by (month) (gryt_keycloak_signups_by_month_accounts{realm=~\"$realm\"})", "legendFormat": "{{ month }}", "instant": true, "format": "table" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "options": { "xTickLabelRotation": -45, "showValue": "auto" }
+    },
+    {
+      "type": "barchart",
+      "title": "Signups by year",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 69 },
+      "targets": [
+        { "expr": "sum by (year) (gryt_keycloak_signups_by_year_accounts{realm=~\"$realm\"})", "legendFormat": "{{ year }}", "instant": true, "format": "table" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "options": { "showValue": "auto" }
     }
   ],
   "schemaVersion": 39
