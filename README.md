@@ -135,6 +135,49 @@ Managed Challenge weighs reputation rather than volume. So nothing stops a slow 
 ordinary-looking addresses. Fixing that means a Cloudflare rate-limiting rule on the
 registration path, not a change in here.
 
+## Applying settings against a running Keycloak
+
+`apply_security_policy.sh` and `apply_user_profile.sh` both need an admin token. On
+gryt.chat the master-realm `admin` account is **disabled on purpose**, so both fail with
+`invalid_grant / Account disabled`.
+
+**Do not enable it with SQL.** `UPDATE user_entity SET enabled=true` writes a row Keycloak
+is not reading — users are cached, so the token endpoint keeps refusing until Keycloak
+restarts, and the re-disable afterwards needs a second restart. That is two auth outages
+for a config change. It was done that way on 2026-09-08 before anybody found the
+alternative.
+
+Make a temporary admin instead. It needs no restart, and `admin` stays disabled:
+
+```bash
+docker exec -e PW='<pick one>' gryt-auth-keycloak \
+  /opt/keycloak/bin/kc.sh bootstrap-admin user \
+  --username tmpadmin --password:env PW --no-prompt
+```
+
+Run the one-shot as that user:
+
+```bash
+docker compose -f docker-compose.keycloak.yml run --rm --no-deps -T \
+  -e GRYT_KEYCLOAK_ADMIN_USERNAME=tmpadmin \
+  -e GRYT_KEYCLOAK_ADMIN_PASSWORD='<the same one>' \
+  keycloak-security-policy
+```
+
+Then delete it. It is a real admin until you do:
+
+```bash
+# get a token as tmpadmin, find its id, DELETE /admin/realms/master/users/<id>
+```
+
+Verified on Keycloak 26.5.3 against Postgres: created, used to apply the full policy,
+deleted, and `admin` answered `Account disabled` throughout. It does not work on the H2
+dev database — `bootstrap-admin` opens its own JDBC connection and H2 locks the file.
+
+The script names both failures now rather than retrying ten times and giving up:
+`Account disabled` prints these steps, and a wrong password says so and stops. Neither
+retries, because neither gets better on the second attempt.
+
 ## Monitoring and alerts
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails

@@ -89,7 +89,34 @@ while [ "${n}" -lt 10 ]; do
     --data-urlencode "password=${ADMIN_PASS}" 2>&1) || body=""
   token=$(printf '%s' "${body}" | sed -n 's/.*"access_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
   [ -n "${token}" ] && break
-  log "no admin token yet (attempt ${n}/10), retrying in 3s"
+
+  # Say which failure this is instead of retrying ten times and then reporting
+  # "could not get a token". Keycloak answers invalid_grant for two very
+  # different problems, both permanent, and the retry loop used to hide both
+  # behind the same line while the real cause went unnamed for several minutes.
+  reason=$(printf '%s' "${body}" | sed -n 's/.*"error_description"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  case "${reason}" in
+    "Account disabled")
+      log "ERROR: '${ADMIN_USER}' exists but is disabled. Retrying will not help."
+      log "       On gryt.chat that account is disabled on purpose. Make a temporary"
+      log "       admin instead -- it needs no restart and leaves '${ADMIN_USER}' alone:"
+      log "         docker exec -e PW=... <keycloak container> \\"
+      log "           /opt/keycloak/bin/kc.sh bootstrap-admin user \\"
+      log "           --username tmpadmin --password:env PW --no-prompt"
+      log "       Then re-run this with GRYT_KEYCLOAK_ADMIN_USERNAME=tmpadmin, and"
+      log "       delete the user afterwards. See the README."
+      exit 1
+      ;;
+    "Invalid user credentials")
+      log "ERROR: '${ADMIN_USER}' exists and is enabled, but the password is wrong."
+      log "       Retrying will not help. GRYT_KEYCLOAK_ADMIN_PASSWORD in .env is a"
+      log "       placeholder on some deployments, so this is what a stale default"
+      log "       looks like. Pass the real one with -e on docker compose run."
+      exit 1
+      ;;
+  esac
+
+  log "no admin token yet (attempt ${n}/10), retrying in 3s${reason:+ -- ${reason}}"
   sleep 3
 done
 
