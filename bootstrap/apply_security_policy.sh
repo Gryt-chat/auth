@@ -1,6 +1,9 @@
 #!/bin/sh
 # Brute-force protection, a password policy and a failed-sign-in log, none of which is in
-# gryt-realm.json. Safe to re-run, and it must — `--override true` deletes them (GRYT-136).
+# gryt-realm.json. Safe to re-run, and it must — `--override true` deletes them.
+
+# Out of the import file on purpose: realm-level config there took the whole stack down
+# once (GRYT-136), and these have to go through the admin API against a running server.
 set -eu
 
 KC_URL="${KC_URL:-http://keycloak:8080}"
@@ -18,6 +21,8 @@ MAX_DELTA="${GRYT_KC_MAX_DELTA_SECONDS:-43200}"
 
 # Four, on purpose: this password only guards the Keycloak login that vouches for the
 # keypair. Raise it back if that changes, not because twelve reads safer (GRYT-979).
+
+# Checked when a password is set, not when one is used, so turning it on locks nobody out.
 PASSWORD_POLICY="${GRYT_KC_PASSWORD_POLICY:-length(4) and notUsername and notEmail}"
 
 # Failed sign-ins, kept for thirty days (GRYT-1077). Failure types only: successful logins
@@ -179,6 +184,9 @@ log "failed-event log on: ${EVENT_TYPES}, kept ${EVENTS_EXPIRATION}s"
 
 # The master realm, which inherits nothing and until GRYT-1080 took unlimited guesses. Same
 # numbers as gryt, not stricter: locking this account out locks everybody out of the fix.
+
+# No password policy here: it only applies when a password is set, so it would do nothing
+# for the existing one and could block a passphrase you want.
 if [ "${APPLY_TO_MASTER}" = "1" ]; then
   cat > /tmp/master-policy.json <<JSON
 {
