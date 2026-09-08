@@ -1,7 +1,8 @@
 #!/bin/sh
-# Turns on brute-force protection and a password policy for the realm.
+# Turns on brute-force protection, a password policy, and a log of failed
+# sign-ins for the realm.
 #
-# Neither is in gryt-realm.json, and the omission is not a decision anybody
+# None of them is in gryt-realm.json, and the omission is not a decision anybody
 # made: the realm export simply never had them. Grepping it for
 # bruteForceProtected, failureFactor, passwordPolicy or any recaptcha setting
 # returns nothing, so out of the box a Gryt auth stack accepts unlimited login
@@ -53,6 +54,26 @@ MAX_DELTA="${GRYT_KC_MAX_DELTA_SECONDS:-43200}"
 # next changed.
 PASSWORD_POLICY="${GRYT_KC_PASSWORD_POLICY:-length(4) and notUsername and notEmail}"
 
+# Failed sign-ins, kept for thirty days.
+#
+# The realm stored nothing at all until GRYT-1077: events_enabled was false and
+# event_entity was empty, so brute-force protection could fire without leaving
+# any record that it had. keycloak_user_events_total is scraped and counts the
+# same failures, but a counter has no timestamp, client or origin, so it cannot
+# separate one misconfigured client from somebody working through a list. Over
+# the life of the realm it had logged 133 invalid_redirect_uri rejections and
+# there was no way to tell which of the two that was.
+#
+# Failure types only. Successful logins are the high-volume half and are already
+# counted in Prometheus, so storing them would add an IP address per user per
+# sign-in and answer nothing the counter does not. REFRESH_TOKEN is worse again:
+# 60,543 of those against 58 logins.
+EVENTS_EXPIRATION="${GRYT_KC_EVENTS_EXPIRATION_SECONDS:-2592000}"
+EVENT_TYPES="${GRYT_KC_EVENT_TYPES:-LOGIN_ERROR REGISTER_ERROR RESET_PASSWORD_ERROR CODE_TO_TOKEN_ERROR REFRESH_TOKEN_ERROR}"
+
+# Admin events stay off. Sivert is the only admin, so they would record one
+# person configuring their own realm.
+
 log() { echo "[security-policy] $*"; }
 
 token=""
@@ -85,6 +106,9 @@ if [ "${code}" != "200" ]; then
   log "ERROR: GET /admin/realms/${REALM} returned ${code}."
   exit 1
 fi
+
+# Space-separated in the environment, a JSON array in the request.
+event_types_json=$(printf '%s' "${EVENT_TYPES}" | tr -s ' ' '\n' | sed '/^$/d;s/.*/"&"/' | paste -sd, -)
 
 cat > /tmp/policy.json <<JSON
 {
@@ -128,8 +152,50 @@ if [ "${factor}" != "${FAILURE_FACTOR}" ]; then
   exit 1
 fi
 
+# Events have their own endpoint. They are part of the realm representation, but
+# a GET on the realm does not reliably return them, so setting them in the PUT
+# above would leave the read-back below with nothing to check and this script
+# would fail on a realm it had configured correctly.
+cat > /tmp/events.json <<JSON
+{
+  "eventsEnabled": true,
+  "eventsExpiration": ${EVENTS_EXPIRATION},
+  "enabledEventTypes": [${event_types_json}],
+  "adminEventsEnabled": false,
+  "adminEventsDetailsEnabled": false
+}
+JSON
+
+code=$(curl -sS -o /tmp/events.out -w '%{http_code}' -X PUT \
+  -H "Authorization: Bearer ${token}" \
+  -H "Content-Type: application/json" \
+  --data-binary @/tmp/events.json \
+  "${KC_URL}/admin/realms/${REALM}/events/config")
+if [ "${code}" != "204" ] && [ "${code}" != "200" ]; then
+  log "ERROR: PUT /admin/realms/${REALM}/events/config returned ${code}."
+  cat /tmp/events.out
+  exit 1
+fi
+
+current=$(curl -sS -H "Authorization: Bearer ${token}" \
+  "${KC_URL}/admin/realms/${REALM}/events/config")
+events=$(field eventsEnabled)
+expiry=$(field eventsExpiration)
+if [ "${events}" != "true" ]; then
+  log "ERROR: eventsEnabled did not take effect (got '${events}')."
+  exit 1
+fi
+# Checked because the default is 0, which means keep forever. A silent drop of
+# this field turns a thirty-day security log into an unbounded store of IP
+# addresses, which is the one outcome the privacy policy does not allow.
+if [ "${expiry}" != "${EVENTS_EXPIRATION}" ]; then
+  log "ERROR: eventsExpiration is '${expiry}', wanted '${EVENTS_EXPIRATION}'."
+  exit 1
+fi
+
 log "brute-force protection on: ${FAILURE_FACTOR} failures, ${WAIT_INCREMENT}s doubling to ${MAX_WAIT}s, forgotten after ${MAX_DELTA}s"
 log "password policy: ${PASSWORD_POLICY}"
+log "failed-event log on: ${EVENT_TYPES}, kept ${EVENTS_EXPIRATION}s"
 # Deliberately does not say "registration has no captcha", which is what this
 # line used to say. It is true of the Keycloak flow and false of the deployment:
 # GRYT-782 put a Cloudflare Managed Challenge in front of the registration path,
