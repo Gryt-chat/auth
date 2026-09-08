@@ -198,7 +198,7 @@
         "https://gryt.example.com/*",
         "http://localhost:3666/*",
         "http://localhost:3667/*",
-        "http://127.0.0.1:15738/*",
+        "http://127.0.0.1:*",
         "gryt://auth/callback"
       ],
       "webOrigins": [
@@ -208,7 +208,7 @@
         "https://gryt.example.com",
         "http://localhost:3666",
         "http://localhost:3667",
-        "http://127.0.0.1:15738"
+        "http://127.0.0.1:*"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
