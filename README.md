@@ -150,10 +150,16 @@ alternative.
 Make a temporary admin instead. It needs no restart, and `admin` stays disabled:
 
 ```bash
-docker exec -e PW='<pick one>' gryt-auth-keycloak \
+docker exec -e PW='<pick one>' -e KC_HTTP_MANAGEMENT_PORT=9999 gryt-auth-keycloak \
   /opt/keycloak/bin/kc.sh bootstrap-admin user \
   --username tmpadmin --password:env PW --no-prompt
 ```
+
+`KC_HTTP_MANAGEMENT_PORT` is not optional on this deployment. `bootstrap-admin` starts its
+own Keycloak runtime, which tries to bind the management port — and `KC_HEALTH_ENABLED` means
+the running server already holds 9000. Without the override it exits with `Unable to start
+the management interface on 0.0.0.0:9000 / Address already in use`, and the caller sees only
+a missing token. Any port nothing else is using will do.
 
 Run the one-shot as that user:
 
@@ -167,12 +173,26 @@ docker compose -f docker-compose.keycloak.yml run --rm --no-deps -T \
 Then delete it. It is a real admin until you do:
 
 ```bash
-# get a token as tmpadmin, find its id, DELETE /admin/realms/master/users/<id>
+KC=http://keycloak:8080
+CURL="docker run --rm --network auth_gryt-auth-network curlimages/curl:8.11.1 -s"
+TOKEN=$($CURL -X POST "$KC/realms/master/protocol/openid-connect/token" \
+  -d client_id=admin-cli -d grant_type=password \
+  --data-urlencode "username=tmpadmin" --data-urlencode "password=<the same one>" \
+  | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+TID=$($CURL "$KC/admin/realms/master/users?username=tmpadmin" \
+  -H "Authorization: Bearer $TOKEN" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -1)
+$CURL -o /dev/null -w '%{http_code}\n' -X DELETE \
+  "$KC/admin/realms/master/users/$TID" -H "Authorization: Bearer $TOKEN"
 ```
+
+Wants `204`. The curl runs in a container because the Keycloak image has no curl.
 
 Verified on Keycloak 26.5.3 against Postgres: created, used to apply the full policy,
 deleted, and `admin` answered `Account disabled` throughout. It does not work on the H2
 dev database — `bootstrap-admin` opens its own JDBC connection and H2 locks the file.
+
+The port collision was missed the first time this was written because the local Keycloak it
+was tested against had no management port set. It failed on the first real use.
 
 The script names both failures now rather than retrying ten times and giving up:
 `Account disabled` prints these steps, and a wrong password says so and stops. Neither
