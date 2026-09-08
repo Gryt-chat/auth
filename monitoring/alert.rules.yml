@@ -19,3 +19,40 @@ groups:
           summary: "Postgres exporter down"
           description: "Prometheus cannot scrape postgres-exporter for 2 minutes."
 
+      # Nothing watched failed sign-ins until GRYT-1080. GRYT-1077 turned on the
+      # event log, which means an attack can be investigated afterwards -- it does
+      # not mean anybody finds out while it is happening.
+      #
+      # Thresholds are set against how quiet this realm actually is. Over its
+      # whole life it had logged around 144 failed logins in total, so a sustained
+      # rate of any kind is already unusual and these do not need to be generous.
+      - alert: KeycloakFailedLoginSpike
+        expr: sum(rate(keycloak_user_events_total{event="login", error!=""}[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "Sustained failed sign-ins on Keycloak"
+          description: "More than 6 failed sign-ins a minute for 10 minutes. Check event_entity for the source addresses; it keeps 30 days."
+
+      # Brute-force protection has been on since GRYT-743, so a lockout means it
+      # fired. That is the guard working, and it is also the first moment anybody
+      # could know somebody is being targeted.
+      - alert: KeycloakAccountLockout
+        expr: sum(increase(keycloak_user_events_total{event="login", error="user_temporarily_disabled"}[15m])) > 0
+        labels:
+          severity: page
+        annotations:
+          summary: "A Keycloak account was locked out by brute-force protection"
+          description: "Brute-force protection locked at least one account in the last 15 minutes."
+
+      # The master realm is the admin plane. Failures there are rare enough that
+      # the threshold is one, and Cloudflare restricts /admin to Norway, so a
+      # failure that reaches Keycloak has already passed the geo filter.
+      - alert: KeycloakMasterRealmLoginFailure
+        expr: sum(increase(keycloak_user_events_total{event="login", realm="master", error!=""}[15m])) > 0
+        labels:
+          severity: page
+        annotations:
+          summary: "Failed sign-in against the Keycloak master realm"
+          description: "Somebody tried to sign in to the admin realm and failed. Expected during a deploy; investigate otherwise."
