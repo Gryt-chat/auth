@@ -241,6 +241,108 @@
         { "expr": "rate(pg_stat_database_tup_deleted{datname=\"keycloak\", job=\"postgres\"}[5m])", "legendFormat": "Deleted" }
       ],
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "row",
+      "title": "Accounts",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Registered",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_accounts_registered{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Email verified",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_accounts_verified{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Active 24h",
+      "description": "A client holding an offline token that refreshed in the window. Closer to installed and signed in than to used Gryt today.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_active_users_day{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Active 7d",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_active_users_week{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Active 30d",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_active_users_month{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Offline sessions",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 44 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_sessions_offline{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Orphaned sessions",
+      "description": "Sessions whose realm no longer exists. A rising number means realms are being deleted without cleanup.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 44 },
+      "targets": [
+        { "expr": "gryt_keycloak_orphan_sessions", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Active users",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_active_users_day{realm=~\"$realm\"})", "legendFormat": "24h" },
+        { "expr": "sum(gryt_keycloak_active_users_week{realm=~\"$realm\"})", "legendFormat": "7d" },
+        { "expr": "sum(gryt_keycloak_active_users_month{realm=~\"$realm\"})", "legendFormat": "30d" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Registered accounts",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 48 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_accounts_registered{realm=~\"$realm\"})", "legendFormat": "Registered" },
+        { "expr": "sum(gryt_keycloak_accounts_verified{realm=~\"$realm\"})", "legendFormat": "Verified" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
     }
   ],
   "schemaVersion": 39
