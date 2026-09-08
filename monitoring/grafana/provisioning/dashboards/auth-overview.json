@@ -343,6 +343,79 @@
         { "expr": "sum(gryt_keycloak_accounts_verified{realm=~\"$realm\"})", "legendFormat": "Verified" }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+    },
+    {
+      "type": "row",
+      "title": "Growth",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 56 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "New 24h",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 57 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_signups_day{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "New 7d",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 57 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_signups_week{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "New 30d",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 57 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_signups_month{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "New 90d",
+      "description": "Signups go back as far as you like - the account row is never deleted. Activity does not: offline sessions are dropped after 30 days idle, so there is no 90-day active figure.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 57 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_signups_quarter{realm=~\"$realm\"})", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Still active of last 30d signups",
+      "description": "A ratio, not a retention rate. Numerator counts anyone active in 30 days, not only people who signed up in them.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 57 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_active_users_month{realm=~\"$realm\"}) / clamp_min(sum(gryt_keycloak_signups_month{realm=~\"$realm\"}), 1)", "legendFormat": "" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "timeseries",
+      "title": "New accounts",
+      "description": "Fixed trailing windows, so the dashboard time picker does not change them - it changes how much of their recorded history you see. Real history starts 2026-09-08.",
+      "datasource": { "type": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 61 },
+      "targets": [
+        { "expr": "sum(gryt_keycloak_signups_day{realm=~\"$realm\"})", "legendFormat": "24h" },
+        { "expr": "sum(gryt_keycloak_signups_week{realm=~\"$realm\"})", "legendFormat": "7d" },
+        { "expr": "sum(gryt_keycloak_signups_month{realm=~\"$realm\"})", "legendFormat": "30d" },
+        { "expr": "sum(gryt_keycloak_signups_quarter{realm=~\"$realm\"})", "legendFormat": "90d" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
     }
   ],
   "schemaVersion": 39

@@ -36,6 +36,12 @@ gryt_keycloak_accounts:
         usage: "GAUGE"
         description: "Accounts with a verified email address"
 
+# There is no window past 30 days here, and there cannot be. The realm sets
+# offlineSessionIdleTimeout to 2592000, so Keycloak deletes an offline session
+# once it has been idle that long and the row stops existing. A 90-day gauge
+# would return the same number as the 30-day one forever, which is why there
+# isn't one. Measured 2026-09-08: 30d, 90d, 365d and "ever" were all 29.
+#
 # What "active" means here, because the number gets quoted: a client is holding
 # an offline token and refreshed it inside the window. That is closer to "the app
 # is installed and signed in" than to "this person used Gryt today", and it misses
@@ -71,6 +77,48 @@ gryt_keycloak_active_users:
     - ever:
         usage: "GAUGE"
         description: "Distinct users holding any offline session"
+
+# New accounts in trailing windows. The totals above are levels -- how many
+# exist, how many checked in -- and neither says whether the number is moving.
+#
+# Trailing windows rather than a gauge per calendar month, because a per-month
+# series adds a label every month and cannot be summed. Prometheus builds the
+# history itself from gryt_keycloak_accounts_registered going forward; these are
+# what give a number before that history exists.
+#
+# These do go past 30 days, unlike the activity gauges. created_timestamp is a
+# column on a row that is never deleted, so the window is a real choice here.
+gryt_keycloak_signups:
+  query: |
+    SELECT
+      r.name AS realm,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 86400)   * 1000)::float AS day,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 604800)  * 1000)::float AS week,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 2592000) * 1000)::float AS month,
+      count(*) FILTER (
+        WHERE u.created_timestamp > (extract(epoch FROM now()) - 7776000) * 1000)::float AS quarter
+    FROM user_entity u
+    JOIN realm r ON r.id = u.realm_id
+    GROUP BY r.name
+  metrics:
+    - realm:
+        usage: "LABEL"
+        description: "Realm name"
+    - day:
+        usage: "GAUGE"
+        description: "Accounts created in the last 24 hours"
+    - week:
+        usage: "GAUGE"
+        description: "Accounts created in the last 7 days"
+    - month:
+        usage: "GAUGE"
+        description: "Accounts created in the last 30 days"
+    - quarter:
+        usage: "GAUGE"
+        description: "Accounts created in the last 90 days"
 
 gryt_keycloak_sessions:
   query: |
