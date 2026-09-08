@@ -1,23 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/update-email/Page.tsx" --revert
- *
- * Changing the address on an account.
- *
- * Reachable only once `update-email` is in KC_FEATURES and the UPDATE_EMAIL
- * required action is registered — both in this PR. Keycloak keeps this behind a
- * flag on 26.5, so on a server without it the action does not exist and this
- * page is dead code.
- *
- * On this realm the email *is* the username (`registrationEmailAsUsername`), so
- * this changes what somebody signs in with. That is the reason to route people
- * here rather than to UPDATE_PROFILE, which edits the same field and skips the
- * re-verification.
- *
- * The fields come from `UserProfileFormFields` rather than a hand-written input,
- * because the realm's declarative user profile decides what is asked for and
- * what it validates. Hard-coding an email box here would drift from
- * gryt-user-profile.json the first time it changed.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The fields come from `UserProfileFormFields`, not a hard-coded box.
  */
 
 import { Button } from "@gryt/ui";

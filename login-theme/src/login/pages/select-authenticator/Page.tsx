@@ -1,21 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/select-authenticator/Page.tsx" --revert
- *
- * "Select login method" — the page a passkey user meets, because the browser
- * flow offers webauthn-authenticator-passwordless and the password form as two
- * alternatives at the same level.
- *
- * The original renders each option as a bare <button type="submit"> and leans on
- * kcClsx for the list styling. doUseDefaultCss is false here, so those classes
- * resolve to nothing and the page's own baseline painted every option as a
- * filled accent pill — two primary actions of different widths with centred
- * two-line labels, which is neither a list nor a choice.
- *
- * These are options, not actions: one row each, left-aligned, name over
- * explanation, chevron on the right. The submit-button semantics are kept
- * exactly — Keycloak posts `authenticationExecution`, and the value is what
- * decides which credential the flow continues with.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. Keycloak posts `authenticationExecution`; the value decides.
  */
 
 import { CaretRightIcon } from "@phosphor-icons/react";

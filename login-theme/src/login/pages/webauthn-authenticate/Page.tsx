@@ -1,21 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/webauthn-authenticate/Page.tsx" --revert
- *
- * Signing in with a passkey. The browser flow offers
- * webauthn-authenticator-passwordless beside the password form, so this is an
- * ordinary page here rather than an exotic one.
- *
- * Every id below is Keycloak's contract: useScript fills #clientDataJSON,
- * #authenticatorData, #signature, #credentialId, #userHandle and #error on the
- * hidden #webauth form, reads the #authn_select form to know which credentials
- * to offer the browser, and hooks the button by id. The button stays
- * type="button" for that reason — the script submits, not the browser.
- *
- * The list of registered authenticators is not a choice. The original rendered
- * it with the same kcClsx classes as select-authenticator's rows, which made it
- * look like something to click; the browser picks the credential, not the page.
- * It is a list of what this account has, so it reads as one.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. Every id is Keycloak's contract, and the button stays type="button".
  */
 
 import { Button } from "@gryt/ui";

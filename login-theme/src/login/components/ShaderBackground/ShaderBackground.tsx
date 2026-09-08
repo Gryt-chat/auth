@@ -6,19 +6,8 @@ import {
 } from "./shader";
 
 /**
- * The animated page background.
- *
- * Raw WebGL rather than three.js. A fullscreen background is two triangles and
- * a fragment shader; three.js is a scene graph, and it would add roughly 170 KB
- * gzipped to the page standing between someone and the product. The look lives
- * entirely in ./shader.ts, so changing it later is one file.
- *
- * It degrades rather than breaks:
- * - No WebGL, or a shader that fails to compile, leaves the canvas absent and
- *   the CSS gradient underneath shows instead. Nobody sees a black rectangle.
- * - prefers-reduced-motion renders a single frame and stops.
- * - A hidden tab stops drawing, because a login page left open in a background
- *   tab has no business spinning the GPU.
+ * The animated page background: raw WebGL, since three.js would add ~170 KB for two
+ * triangles. No WebGL, reduced motion or a hidden tab each degrade rather than break.
  */
 export function ShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -99,9 +88,8 @@ export function ShaderBackground() {
     );
 
     const resize = () => {
-      // Capped at 2: beyond that the buffer grows quadratically for detail
-      // nobody can see in a blurred gradient, and it is the difference between
-      // smooth and stuttering on a 3x phone.
+      // Capped at 2: beyond that the buffer grows quadratically for detail nobody sees in a
+      // blurred gradient, and it is smooth against stuttering on a 3x phone.
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const height = Math.max(1, Math.round(canvas.clientHeight * dpr));

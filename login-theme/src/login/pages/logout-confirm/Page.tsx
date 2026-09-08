@@ -1,14 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/logout-confirm/Page.tsx" --revert
- *
- * Shown when a logout arrives without an id_token_hint, so Keycloak asks rather
- * than assumes. The client sets frontchannelLogout, so this is reachable.
- *
- * Signing out is destructive enough to be the loud thing on the page and safe
- * enough not to need a warning about it, so: one primary button, and a quiet way
- * back for somebody who did not mean it. `session_code` and the `confirmLogout`
- * name are Keycloak's contract.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. `session_code` and the `confirmLogout` name are the contract.
  */
 
 import { Button } from "@gryt/ui";

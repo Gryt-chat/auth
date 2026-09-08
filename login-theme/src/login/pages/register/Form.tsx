@@ -1,13 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/register/Form.tsx" --revert
- *
- * The fields themselves still come from UserProfileFormFields, which builds
- * them from the realm's user profile at runtime — it has to handle every
- * attribute type, multi-valued attributes and per-attribute validators, and
- * reimplementing that on @gryt/ui would be a much larger job than this page.
- * Those inputs are plain semantic HTML and pick up the baseline in gryt.css,
- * which matches TextField closely. The wrapper and the actions are components.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The fields still come from UserProfileFormFields, at runtime.
  */
 
 import { Button } from "@gryt/ui";

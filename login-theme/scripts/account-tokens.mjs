@@ -1,14 +1,5 @@
-// Writes the account console's palette from @gryt/ui's own token file.
-//
-// `@gryt/ui/theme.css` ships the tokens in Tailwind's `@theme` form, which a
-// browser ignores — it is meant to be imported into a Tailwind entry, and the
-// login theme consumes it that way. The account console is not a build, it is
-// a directory of static files Keycloak serves, so it needs the same values as
-// plain custom properties.
-//
-// Generated rather than copied, because a copy is a second palette that drifts
-// the first time somebody tunes a colour. Run `npm run account-tokens` after
-// bumping @gryt/ui and commit what changes.
+// Writes the account console's palette from @gryt/ui's own token file: the console is static
+// files, not a build, so it needs plain custom properties. Re-run after bumping @gryt/ui.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 

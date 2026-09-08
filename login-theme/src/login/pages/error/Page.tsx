@@ -1,14 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/error/Page.tsx" --revert
- *
- * Where every flow ends when it goes wrong, so it is worth more than a
- * paragraph and a link that looks like body text.
- *
- * The message is Keycloak's and stays sanitised HTML — it can carry markup, and
- * kcSanitize is what makes that safe. The way back becomes a real button,
- * because it is the only thing on the page and leaving somebody at a dead end is
- * the actual failure here.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. The message stays sanitised HTML, because it can carry markup.
  */
 
 import { Button } from "@gryt/ui";

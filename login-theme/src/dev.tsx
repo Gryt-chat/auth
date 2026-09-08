@@ -1,17 +1,6 @@
 /**
- * A page browser for the login theme. `npm run pages`.
- *
- * The documented way to see these pages is `npm run storybook`, which is
- * keycloakify's start-keycloak — and that shells out to a Maven build. This
- * repo builds the theme in Docker (login-theme/build.sh) precisely so nobody
- * needs a JVM or Maven on their machine, so the documented way does not work
- * here. Without something like this, the only way to look at, say, the passkey
- * error page is to reach it in a real flow, which means owning a broken passkey.
- *
- * The context comes from the mock the library already ships and keeps in step
- * with its own KcContext types, so this stays honest for free.
- *
- * Not shipped: the keycloakify build only takes what index.html pulls in.
+ * A page browser for the login theme, `npm run pages`. keycloakify's start-keycloak shells
+ * out to Maven, which this repo avoids on purpose. Not shipped: index.html pulls nothing in.
  */
 
 import { StrictMode, useState } from "react";
@@ -20,18 +9,8 @@ import { KcPage } from "./kc.gen";
 import { getKcContextMock } from "./login/mocks/getKcContextMock";
 
 /**
- * The pages Gryt can actually reach, first, then the rest.
- *
- * What is reachable is decided by the realm: there are no identity providers,
- * no consent, no SAML and no device flow, and UPDATE_PROFILE, UPDATE_EMAIL and
- * TERMS_AND_CONDITIONS are not enabled required actions. The browser flow does
- * offer webauthn-authenticator-passwordless beside the password form, which is
- * what makes select-authenticator and the webauthn pages ordinary rather than
- * exotic.
- *
- * delete-account-confirm moved up here when auth#17 enabled the delete_account
- * required action. Gryt reaches it with kc_action=delete_account rather than
- * through the account console, so it is a login page like the rest.
+ * The pages Gryt can actually reach, first, then the rest. The realm has no identity
+ * providers, no consent, no SAML and no device flow, and offers passwordless webauthn.
  */
 const REACHABLE = [
   "login.ftl",
@@ -67,16 +46,11 @@ const REST = [
 function Dev() {
   const initial = new URLSearchParams(location.search).get("page") || REACHABLE[0];
   const [pageId, setPageId] = useState<string>(initial);
-  // The realm does not set internationalizationEnabled, so production shows no
-  // locale switcher at all. The mock turns on all thirty, which buries the page
-  // title under seven rows of links — worth being able to see, not the default.
+  // The realm does not set internationalizationEnabled, so production shows no locale
+  // switcher. The mock turns on all thirty, which buries the title under seven rows.
   const [oneLocale, setOneLocale] = useState(true);
-  // The library's mock profile collects username, email, firstName, lastName and
-  // locale. The gryt realm collects username and email, renders username never
-  // because registrationEmailAsUsername is set, and dropped the two name fields
-  // in GRYT-180 — so register.ftl on the mock shows two fields nobody will ever
-  // be asked for. Verified against the running local Keycloak, which renders
-  // email, password and password-confirm and nothing else.
+  // The library's mock profile collects five fields; the gryt realm collects email only,
+  // since registrationEmailAsUsername is set and the name fields went in GRYT-180.
   const [realRealm, setRealRealm] = useState(true);
 
   let kcContext: unknown;
@@ -97,8 +71,7 @@ function Dev() {
         | { attributesByName?: Record<string, unknown>; attributes?: { name: string }[] }
         | undefined;
       // Email only. The realm's profile also declares username, but with
-      // registrationEmailAsUsername set Keycloak omits it from what it sends the
-      // page — which is why the real registration form has no username input.
+      // registrationEmailAsUsername set Keycloak omits it from what it sends the page.
       const keep = (name: string) => name === "email";
       if (profile?.attributesByName) {
         for (const name of Object.keys(profile.attributesByName)) {
@@ -109,10 +82,8 @@ function Dev() {
         profile.attributes = profile.attributes.filter(a => keep(a.name));
       }
 
-      // The mock names the saved authenticators "label1" and "label2", which
-      // reads as placeholder text sitting in the page rather than as data. They
-      // are whatever a person called their own device, so they get names that
-      // look like ones. The picker only appears at all with more than one.
+      // The mock names the saved authenticators "label1" and "label2", which reads as
+      // placeholder text. They are whatever a person called their own device.
       const otpLogin = ctx.otpLogin as
         | { userOtpCredentials?: { id: string; userLabel: string }[] }
         | undefined;

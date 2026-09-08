@@ -1,14 +1,6 @@
 /**
- * Owned from @keycloakify/login-ui 250004.7.2. To restore the original:
- *   npx keycloakify own --path "login/pages/login/Form.tsx" --revert
- *
- * Rebuilt on @gryt/ui. Field ids and form field names are Keycloak's contract
- * and are preserved exactly — it posts `username` even when the label says
- * Email, and the WebAuthn script looks the button up by id.
- *
- * Note the label already resolves to "Email" on its own, because the realm sets
- * registrationEmailAsUsername. The old theme's gryt-register.js relabelled this
- * by hand; that was never necessary.
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. It posts `username` even when the label says Email.
  */
 
 import { Button, Checkbox, TextField } from "@gryt/ui";
@@ -31,9 +23,8 @@ export function Form() {
 
     const hasCredentialError = kcContext.messagesPerField.existsError("username", "password");
 
-    // A wrong password must not tell you whether the account exists, so
-    // Keycloak reports one error across both fields. Rendering it once, under
-    // whichever field is present, keeps that property.
+    // A wrong password must not tell you whether the account exists, so Keycloak reports one
+    // error across both fields. Rendering it once keeps that property.
     const credentialError = hasCredentialError ? (
         <span
             id="input-error"

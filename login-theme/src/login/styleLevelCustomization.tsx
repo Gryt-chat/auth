@@ -1,8 +1,6 @@
 /**
- * This file has been claimed for ownership from @keycloakify/login-ui version 250004.7.2.
- * To relinquish ownership and restore this file to its original content, run the following command:
- * 
- * $ npx keycloakify own --path "login/styleLevelCustomization.tsx" --revert
+ * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
+ * --revert` restores it. No PatternFly.
  */
 
 import type { ReactNode } from "react";
@@ -24,10 +22,8 @@ type StyleLevelCustomization = {
 
 export function useStyleLevelCustomization(): StyleLevelCustomization {
     return {
-        // No PatternFly. Keycloak's default login CSS is what the old theme
-        // spent 610 lines fighting; these pages are built from @gryt/ui
-        // instead, so loading it would only give those rules something to
-        // override.
+        // No PatternFly. Keycloak's default login CSS is what the old theme spent 610 lines
+        // fighting; these pages are @gryt/ui, so it would only give those rules a target.
         doUseDefaultCss: false
     };
 }
