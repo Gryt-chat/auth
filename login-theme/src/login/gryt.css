@@ -247,14 +247,18 @@
   color: var(--gryt-muted);
 }
 
+/* Underlined at rest, like every link in running text. On hover alone it reads
+   as coloured text, and on a phone the pointer never arrives (GRYT-1093). */
 .gryt-auth-link {
   color: var(--gryt-accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentcolor 32%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .gryt-auth-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration-color: currentcolor;
 }
 
 .gryt-auth-error {
@@ -694,18 +698,25 @@
  * still in the DOM, still had its text, and was invisible. */
 .gryt-auth-main a:not([class*="gryt-"]) {
   color: var(--gryt-accent);
-  text-decoration: none;
-}
-
-.gryt-auth-main a:not([class*="gryt-"]):hover {
   text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentcolor 32%, transparent);
+  text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
 
+.gryt-auth-main a:not([class*="gryt-"]):hover {
+  text-decoration-color: currentcolor;
+}
+
 /* Excluding components from the link baseline also excludes them from its
-   `text-decoration: none`, which hands them back the browser's underline. A
-   button that navigates should still look like a button. */
-.gryt-auth-main a[class*="gryt-"] {
+   decoration, so a component rendered as an anchor gets the browser's own.
+   @gryt/ui carries `no-underline` on Button and IconButton since 0.29.1; this
+   covers the rest of what it renders as an anchor.
+
+   `gryt-auth-` is this theme's own namespace, not the library's. Without the
+   :not() this matched .gryt-auth-link too and beat it on specificity, so that
+   link's underline — hover included — never drew at all. */
+.gryt-auth-main a[class*="gryt-"]:not([class*="gryt-auth-"]) {
   text-decoration: none;
 }
 
