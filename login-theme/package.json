@@ -24,7 +24,7 @@
     "_comment_admin_tokens": "Rewrites the admin console's palette from @gryt/theme's OLED preset. Separate from account-tokens because the admin console is deliberately a different palette: the account console matches the login page users see, and this one is true black. Run it after bumping @gryt/theme."
   },
   "dependencies": {
-    "@gryt/ui": "^0.29.0",
+    "@gryt/ui": "^0.29.1",
     "@keycloakify/login-ui": "^250004.7.2",
     "@phosphor-icons/react": "^2.1.10",
     "keycloakify": "^11.15.14",
