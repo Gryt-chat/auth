@@ -30,10 +30,10 @@ groups:
           summary: "Sustained failed sign-ins on Keycloak"
           description: "More than 6 failed sign-ins a minute for 10 minutes. Check event_entity for the source addresses; it keeps 30 days."
 
-      # Brute-force protection has been on since GRYT-743, so a lockout means it fired: the
-      # guard working, and the first moment anybody could know somebody is being targeted.
+      # user_disabled_by_temporary_lockout, not login/user_temporarily_disabled: the
+      # latter counts attempts against an already-locked account, four for one lockout.
       - alert: KeycloakAccountLockout
-        expr: sum(increase(keycloak_user_events_total{event="login", error="user_temporarily_disabled"}[15m])) > 0
+        expr: sum(increase(keycloak_user_events_total{event="user_disabled_by_temporary_lockout"}[15m])) > 0
         labels:
           severity: page
         annotations:
