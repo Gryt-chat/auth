@@ -116,7 +116,7 @@
   --pf-v5-global--FontFamily--redhatfont--heading: ui-sans-serif, system-ui, sans-serif;
 }
 
-/* The logo is a 512-square owl and the masthead sizes brand images by height
+/* The logo is a 1024-square owl and the masthead sizes brand images by height
    alone, so without this it draws at whatever the file asks for. */
 .pf-v5-c-brand {
   height: 2rem;

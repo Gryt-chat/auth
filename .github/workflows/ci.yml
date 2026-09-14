@@ -47,3 +47,4 @@ jobs:
         with:
           node-version: 24
       - run: node scripts/check-comment-length.mjs
+      - run: node scripts/check-retired-logo.mjs
