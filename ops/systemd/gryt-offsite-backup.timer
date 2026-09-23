@@ -1,0 +1,16 @@
+[Unit]
+Description=Copy the Keycloak dumps off-site once a day
+
+[Timer]
+OnCalendar=daily
+
+# Persistent does work for OnCalendar, unlike on the monotonic timers in the
+# superproject: a run missed while the box was off happens at the next boot.
+Persistent=true
+
+# Nothing else contends for this, but a fixed midnight means every machine that
+# ever runs this hits the far end at the same second.
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target
