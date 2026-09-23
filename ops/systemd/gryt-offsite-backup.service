@@ -1,0 +1,20 @@
+[Unit]
+Description=Copy the Keycloak dumps off-site, encrypted to a key neither machine holds
+Documentation=https://github.com/Gryt-chat/auth/blob/main/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# A symlink into the checkout rather than a copy, so `git pull` updates the
+# script and nothing has to be installed again. systemd needs a literal path.
+ExecStart=/usr/local/bin/gryt-offsite-backup
+
+# No leading dash. The script cannot do anything useful without the destination
+# and the recipient, so a missing file should fail the unit rather than run it.
+EnvironmentFile=/etc/default/gryt-offsite-backup
+
+# The first run encrypts and uploads the whole local window, which on the
+# measured 17 MB is quick. The cap is for a slow link, not a big backlog.
+TimeoutStartSec=1800

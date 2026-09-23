@@ -29,7 +29,7 @@ itself.
 | **Identity** | Certificate authority that binds Keycloak identities to client public keys ([details](identity/README.md)) |
 | **HAProxy** | Reverse proxy for production TLS termination |
 | **Bootstrap** | One-shot containers that bring a fresh Keycloak into a usable state ([details](#bootstrap)) |
-| **Ops** | Backup/restore tooling for the Postgres database |
+| **Ops** | Backup, off-site copy and restore tooling for the Postgres database |
 
 ## Development setup
 
@@ -240,6 +240,149 @@ It sends within `group_wait`, 30 seconds. Check it landed with
 `alertmanager_notifications_total{integration="email"}` on the Alertmanager metrics
 endpoint; it was 0 until the first deliberate test on 2026-09-08, which is how long that
 last hop went unproven.
+
+## Backups
+
+`pg-backup` dumps Postgres every six hours to `GRYT_AUTH_BACKUP_DIR`, keeps 30 days, and
+prunes only after a dump it's checked. On dev that directory is a CIFS mount from the NAS,
+so the dumps are already off the disk the database lives on.
+
+They're still in the same building. A fire, a theft or ransomware on the LAN takes the
+database and all 126 backups together, and every Gryt account with them.
+
+### One copy out of the building
+
+`ops/offsite_backup.sh` runs once a day on dev, from `gryt-offsite-backup.timer`. For every
+dump that isn't on the far end yet, it encrypts to an age recipient and sends it over ssh.
+Then it asks the far end to prune its own window. The far end is the Gigahost VPS: dev
+already reaches it by key, and it has 33 GB free against 17 MB of dumps.
+
+Retention there is 90 days against 30 on dev. It's set in `ops/offsite_receive.sh` rather
+than passed in, so nothing on dev can shorten it.
+
+**The dumps are encrypted before they leave.** Since GRYT-783 a Keycloak dump carries every
+account's sealed message-key blob alongside its credentials, so a copy of one is worth
+stealing.
+
+age rather than GPG. The private key is one line, so it goes into a password manager as it
+is and comes back out when you need it. There's no keyring on dev to drift. Decrypting is
+`age -d -i` on any machine that has the binary, where GPG wants a `gpg --import` into a
+trust store first. What GPG has going for it is that dev already has it and age has to be
+installed.
+
+Somebody who takes the VPS gets the encrypted bytes and the file names. The names say when
+each dump was taken and roughly how big the database is. They can't decrypt any of it: the
+private half is in a password manager and on neither machine, so no accounts, no password
+hashes, no message keys, no client secrets. They can delete the copies, because by then the
+box is theirs. So this covers losing the building, and nothing else.
+
+The key dev holds is pinned to `ops/offsite_receive.sh` as a forced command, so it can't
+open a shell there. It has three verbs: list, put and prune. `put` refuses a name that
+isn't a dump name, refuses to overwrite a file that's already there, and checks the sha256
+it was promised before it names the file. A dev that's been taken over can add copies. It
+can't replace or read back what's already on the VPS.
+
+### How you find out it stopped
+
+Every failure exits non-zero, so the unit sits in `systemctl --failed` with the reason in
+`journalctl -u gryt-offsite-backup`. Set `GRYT_OFFSITE_ALERT_WEBHOOK` and it posts to
+Discord as well. Without it, somebody has to go and look.
+
+A run that uploads nothing is still a failure. After the uploads the script re-reads the far
+end and fails if the newest scheduled dump there is more than `GRYT_OFFSITE_STALE_HOURS`
+old. That covers the dumper on dev dying while the copy step carries on working fine.
+
+**The timer never firing isn't covered.** Nothing outside the house is watching for silence.
+A box that's off, a disabled unit and a revoked key all look like a quiet week. GRYT-1401
+covers that.
+
+### Restoring one
+
+Run it once before you need it. These commands were run on 2026-09-23 against a real dump.
+
+```bash
+ssh vps 'sudo ls -1 /home/gryt-backup/keycloak | tail -5'
+ssh vps 'sudo cat /home/gryt-backup/keycloak/keycloak-<timestamp>.sql.gz.age' > keycloak.sql.gz.age
+
+age -d -i keycloak-offsite.key -o keycloak.sql.gz keycloak.sql.gz.age
+gzip -t keycloak.sql.gz
+
+docker run -d --name restore-test -e POSTGRES_DB=keycloak -e POSTGRES_USER=keycloak \
+  -e POSTGRES_PASSWORD=restore_test_password postgres:16-alpine
+gzip -dc keycloak.sql.gz | docker exec -i restore-test psql -q -U keycloak -d keycloak
+docker exec restore-test psql -U keycloak -d keycloak -c 'select name, enabled from realm;'
+docker rm -f restore-test
+```
+
+`keycloak-offsite.key` is the private half, pasted out of the password manager into a file
+for as long as the restore takes. `ops/pg_restore_smoketest.sh` does the container half of
+this on a plain `.sql.gz` if you want it scripted.
+
+Stop Keycloak before putting a dump back into the real stack. A restore rewrites the
+database underneath a server that goes on holding the realm id it started with, the same
+way `kc.sh import` does.
+
+### Setting it up
+
+One-time, in this order. The account on the VPS needs a real shell, because sshd runs a
+forced command through it and `nologin` would refuse.
+
+```bash
+# 1. On your machine. Put the file in the password manager, then delete it.
+#    Keep the age1... line it prints; step 7 needs it.
+age-keygen -o keycloak-offsite.key
+
+# 2. Bring the checkout on dev up to date and install age.
+ssh edition35 'cd /home/sivert/gryt/packages/auth && git pull \
+  && sudo apt-get update && sudo apt-get install -y age'
+
+# 3. A key on dev for this job and nothing else. Prints the public half.
+ssh edition35 'sudo ssh-keygen -t ed25519 -N "" -C gryt-offsite \
+  -f /root/.ssh/id_ed25519_gryt_offsite && sudo cat /root/.ssh/id_ed25519_gryt_offsite.pub'
+
+# 4. Teach dev the VPS host key, so BatchMode ssh doesn't stop to ask.
+ssh edition35 'sudo ssh-keyscan -H 193.200.238.156 | sudo tee -a /root/.ssh/known_hosts'
+
+# 5. The account and the directory on the VPS.
+ssh vps 'sudo useradd -m -s /bin/sh gryt-backup \
+  && sudo -u gryt-backup mkdir -p /home/gryt-backup/keycloak /home/gryt-backup/.ssh \
+  && sudo -u gryt-backup chmod 700 /home/gryt-backup/.ssh'
+
+# 6. The receiver, and the key from step 3 pinned to it. Paste that ssh-ed25519
+#    line in place of KEY below.
+ssh edition35 'cat /home/sivert/gryt/packages/auth/ops/offsite_receive.sh' \
+  | ssh vps 'sudo mkdir -p /usr/local/lib/gryt \
+    && sudo tee /usr/local/lib/gryt/offsite_receive.sh >/dev/null \
+    && sudo chmod 755 /usr/local/lib/gryt/offsite_receive.sh'
+
+ssh vps 'sudo -u gryt-backup tee -a /home/gryt-backup/.ssh/authorized_keys >/dev/null \
+  && sudo -u gryt-backup chmod 600 /home/gryt-backup/.ssh/authorized_keys' <<'EOF'
+restrict,command="/bin/sh /usr/local/lib/gryt/offsite_receive.sh" KEY
+EOF
+
+# 7. The settings on dev. Put the age1... line from step 1 in place of RECIPIENT.
+ssh edition35 'sudo tee /etc/default/gryt-offsite-backup >/dev/null \
+  && sudo chmod 600 /etc/default/gryt-offsite-backup' <<'EOF'
+GRYT_AUTH_BACKUP_DIR=/mnt/gryt-backups/keycloak
+GRYT_OFFSITE_HOST=gryt-backup@193.200.238.156
+GRYT_OFFSITE_RECIPIENT=RECIPIENT
+GRYT_OFFSITE_SSH_KEY=/root/.ssh/id_ed25519_gryt_offsite
+EOF
+
+# 8. The timer, and one run now. The first run sends the whole local window.
+ssh edition35 'sudo ln -sf /home/sivert/gryt/packages/auth/ops/offsite_backup.sh \
+    /usr/local/bin/gryt-offsite-backup \
+  && sudo cp /home/sivert/gryt/packages/auth/ops/systemd/gryt-offsite-backup.service \
+    /home/sivert/gryt/packages/auth/ops/systemd/gryt-offsite-backup.timer /etc/systemd/system/ \
+  && sudo systemctl daemon-reload \
+  && sudo systemctl enable --now gryt-offsite-backup.timer \
+  && sudo systemctl start gryt-offsite-backup.service \
+  && sudo journalctl -u gryt-offsite-backup -n 20 --no-pager'
+
+# 9. Check it landed.
+ssh edition35 'sudo systemctl list-timers gryt-offsite-backup --no-pager'
+ssh vps 'sudo ls -1 /home/gryt-backup/keycloak | wc -l'
+```
 
 ## Themes
 
