@@ -1,0 +1,52 @@
+name: Keycloak pairing
+
+# Builds the pairing extension and runs it inside the exact Keycloak image the compose file
+# runs. Anything that can change what the extension talks to is in the paths below.
+
+on:
+  pull_request:
+    paths:
+      - keycloak-pairing/**
+      - docker-compose.keycloak.yml
+      - realm/gryt-realm.json
+      - scripts/check-keycloak-version.mjs
+      - .github/workflows/keycloak-pairing.yml
+  push:
+    branches: [main]
+    paths:
+      - keycloak-pairing/**
+      - docker-compose.keycloak.yml
+      - realm/gryt-realm.json
+      - scripts/check-keycloak-version.mjs
+      - .github/workflows/keycloak-pairing.yml
+
+concurrency:
+  group: keycloak-pairing-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/check-keycloak-version.mjs
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          cache-dependency-path: keycloak-pairing/pom.xml
+
+      # Unit tests, the jar, then PairingIT against quay.io/keycloak/keycloak:<keycloak.version>.
+      - run: mvn -B verify
+        working-directory: keycloak-pairing
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failsafe-reports
+          path: keycloak-pairing/target/failsafe-reports/

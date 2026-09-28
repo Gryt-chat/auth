@@ -21,6 +21,13 @@ if [[ ! -f "${THEME_JAR}" ]]; then
   "${AUTH_DIR}/login-theme/build.sh"
 fi
 
+# Same for the pairing extension, except a missing one stops Keycloak starting at all.
+PAIRING_JAR="${AUTH_DIR}/keycloak-pairing/dist/gryt-pairing.jar"
+if [[ ! -f "${PAIRING_JAR}" ]]; then
+  echo "[auth/up.sh] Pairing extension jar missing — building it (this needs Docker only)."
+  "${AUTH_DIR}/keycloak-pairing/build.sh"
+fi
+
 compose() {
   if [[ -f "${AUTH_DIR}/.env" ]]; then
     # Use compose's dotenv parsing (doesn't require shell-quoting)

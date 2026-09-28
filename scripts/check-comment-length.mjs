@@ -10,12 +10,12 @@ const EMPTY = /^(\/\*+|\*+\/?|\/\/|#)$|[─=]{3,}\s*\*?\/?$/;
 /* Paths not swept yet. Delete an entry once that directory is clean. */
 const NOT_YET = [];
 
-const ROOTS = ["identity", "bootstrap", "ops", "monitoring", "themes", "login-theme", "realm", "backups", "scripts", ".github/workflows"];
-const SKIP = new Set(["node_modules", "dist", "build", "out", "coverage", ".git"]);
+const ROOTS = ["identity", "keycloak-pairing", "bootstrap", "ops", "monitoring", "themes", "login-theme", "realm", "backups", "scripts", ".github/workflows"];
+const SKIP = new Set(["node_modules", "dist", "build", "out", "coverage", "target", ".git"]);
 // `kc.gen.tsx` is written by `keycloakify sync-extensions`, so an edit here is undone on
 // the next install. Trim the generator, not the output.
 const GENERATED = /\.gen\.\w+$/;
-const CODE = /\.(ts|tsx|js|mjs|cjs|jsx)$/;
+const CODE = /\.(ts|tsx|js|mjs|cjs|jsx|java)$/;
 const HASH = /\.(ya?ml|sh|conf|env)$/;
 
 function files(dir) {

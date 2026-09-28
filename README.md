@@ -29,6 +29,7 @@ itself.
 | **Identity** | Certificate authority that binds Keycloak identities to client public keys ([details](identity/README.md)) |
 | **HAProxy** | Reverse proxy for production TLS termination |
 | **Bootstrap** | One-shot containers that bring a fresh Keycloak into a usable state ([details](#bootstrap)) |
+| **Pairing extension** | A Keycloak provider that lets a signed-in app approve a new device's sign-in ([details](#pairing-extension)) |
 | **Ops** | Backup, off-site copy and restore tooling for the Postgres database |
 
 ## Development setup
@@ -383,6 +384,84 @@ ssh edition35 'sudo ln -sf /home/sivert/gryt/packages/auth/ops/offsite_backup.sh
 ssh edition35 'sudo systemctl list-timers gryt-offsite-backup --no-pager'
 ssh vps 'sudo ls -1 /home/gryt-backup/keycloak | wc -l'
 ```
+
+## Pairing extension
+
+`keycloak-pairing/` is a small Keycloak provider in Java. When you link a new device from
+one that's already signed in, the new device starts an OAuth device grant, and the old one
+approves its `user_code` through this endpoint instead of Keycloak's device page:
+
+```
+POST /realms/gryt/gryt-pairing/approve
+Authorization: Bearer <an access token for gryt-web, under 60 seconds old>
+{ "user_code": "...", "binding": "<the pairing's kc value>" }
+```
+
+It answers `204` when the code is approved, and otherwise a status with
+`{"error": "..."}`. A code gets one call whatever happens, and any refusal also denies the
+code, so the new device's next poll gets `access_denied`. The full design, with every check
+and why, is section 3 of
+[`docs/pairing-design.md`](https://github.com/Gryt-chat/crypto/blob/main/docs/pairing-design.md)
+in the crypto repo.
+
+| Status | `error` | Means |
+|--------|---------|-------|
+| 400 | `bad_request` | The body isn't JSON with a `user_code` and a `binding` |
+| 401 | `invalid_token` | No token, or Keycloak's own token check refused it |
+| 403 | `wrong_client` | The token isn't from `gryt-web` |
+| 403 | `stale_token` | The token is over 60 seconds old. Refresh and try again with a new code |
+| 403 | `user_disabled`, `user_locked` | The account is disabled, or locked by brute-force protection |
+| 403 | `required_actions` | The account has something pending, like verifying an email |
+| 400 | `unknown_code` | No such code. Already approved, or it ran out |
+| 409 | `code_used` | This code has had its one call already |
+| 409 | `code_not_pending` | The code was denied or approved elsewhere |
+| 410 | `expired_code` | The code ran out |
+| 403 | `wrong_code_client`, `binding_mismatch` | The code isn't `gryt-web`'s, or it wasn't made by this pairing |
+| 429 | `rate_limited` | 5 approvals an hour or 20 a day, or 10 refusals in an hour, for this account |
+
+The endpoint never answers `404` itself. A `404` means the extension isn't installed, and
+the apps fall back to Keycloak's device page.
+
+### Building and testing it
+
+```bash
+./keycloak-pairing/build.sh    # writes keycloak-pairing/dist/gryt-pairing.jar, needs Docker only
+```
+
+The tests start the Keycloak image from `docker-compose.keycloak.yml` with the jar in
+`providers/`, and run the whole device flow against it. They need Java 21, Maven and Docker:
+
+```bash
+cd keycloak-pairing && mvn verify
+```
+
+CI runs them on every PR that touches the extension, the compose file or the realm file.
+It also fails if `keycloak.version` in `keycloak-pairing/pom.xml` isn't the image tag in the
+compose file, so a Keycloak upgrade has to move both and run the tests. None of what the
+extension uses is public Keycloak API, so expect an upgrade to need changes here.
+
+### Deploying it
+
+Compose mounts `keycloak-pairing/dist/gryt-pairing.jar` into `providers/`. **Build it before
+anything recreates the `keycloak` container.** If the file is missing, Docker mounts an
+empty directory in its place, and Keycloak refuses to start (`gryt-pairing.jar (Is a
+directory)`). `up.sh` builds it when it's missing.
+
+Keycloak reads providers at startup, so a new jar needs a restart of `keycloak` and nothing
+else. Check `GRYT_IMPORT_REALM` is `0` in `.env` first, and keep `--no-deps`, so nothing
+starts the realm import:
+
+```bash
+grep GRYT_IMPORT_REALM .env                       # must be 0, or not there
+./keycloak-pairing/build.sh
+docker compose -f docker-compose.keycloak.yml -p auth up -d --no-deps keycloak
+```
+
+Keycloak logs `KC-SERVICES0047` for `gryt-pairing` at startup, which is the warning every
+provider of this type gets. An empty POST to the endpoint should answer `400 bad_request`.
+
+To take it out, revert the compose change and run the same `up` line. Turning on the device
+grant for `gryt-web` is a separate step through the admin API.
 
 ## Themes
 

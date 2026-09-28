@@ -80,6 +80,9 @@ services:
       # needed on the host. Keycloak loads themes from providers at startup, so
       # a rebuilt jar needs a container restart to take effect.
       - ./login-theme/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar:/opt/keycloak/providers/gryt-login-theme.jar:ro
+      # In-app device pairing (POST /realms/gryt/gryt-pairing/approve). Build it with keycloak-pairing/build.sh
+      # first: a missing jar becomes a directory here, and Keycloak then refuses to start.
+      - ./keycloak-pairing/dist/gryt-pairing.jar:/opt/keycloak/providers/gryt-pairing.jar:ro
     networks:
       - gryt-auth-network
     restart: unless-stopped
