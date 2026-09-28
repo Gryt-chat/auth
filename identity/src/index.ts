@@ -1,10 +1,14 @@
 import { serve } from "@hono/node-server";
 
-import { app } from "./routes.js";
+import { app, relay } from "./routes.js";
 
 const port = parseInt(process.env.PORT || "3000", 10);
 
 console.log(`Gryt Identity Service starting on port ${port}...`);
+if (!process.env.GRYT_PAIRING_TRUSTED_PROXIES) {
+  console.warn("pairing: GRYT_PAIRING_TRUSTED_PROXIES is empty, so every client counts as the tunnel's address");
+}
+relay.start();
 
 serve({
   fetch: app.fetch,
