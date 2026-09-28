@@ -4,10 +4,14 @@ import { cors } from "hono/cors";
 import { getCAPublicJwk } from "./keys.js";
 import { verifyKeycloakToken } from "./keycloak.js";
 import { issueCertificate } from "./certificate.js";
+import { Relay } from "./pairing/relay.js";
+import { pairingRoutes, trustedProxies } from "./pairing/routes.js";
 
 export const app = new Hono();
+export const relay = new Relay();
 
 app.use("*", cors());
+app.route("/api/v1/pairing", pairingRoutes(relay, trustedProxies(process.env.GRYT_PAIRING_TRUSTED_PROXIES)));
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
