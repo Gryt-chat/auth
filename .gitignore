@@ -12,3 +12,6 @@ backups/*.sql
 backups/*.sql.gz
 backups/*.dump
 identity/data/
+
+# Built by keycloak-pairing/build.sh or `mvn verify`.
+keycloak-pairing/target/

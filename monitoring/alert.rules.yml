@@ -49,3 +49,13 @@ groups:
         annotations:
           summary: "Failed sign-in against the Keycloak master realm"
           description: "Somebody tried to sign in to the admin realm and failed. Expected during a deploy; investigate otherwise."
+
+      # Refused device-code approvals, from the pairing extension and from Keycloak's own device
+      # page. The extension blocks one account after 10 in an hour, so 20 in 15 minutes is several.
+      - alert: KeycloakPairingRefusalSpike
+        expr: sum(increase(keycloak_user_events_total{event="oauth2_device_verify_user_code", error!=""}[15m])) > 20
+        labels:
+          severity: page
+        annotations:
+          summary: "Many refused device approvals on Keycloak"
+          description: "More than 20 device-code approvals were refused in 15 minutes. Check event_entity for OAUTH2_DEVICE_VERIFY_USER_CODE_ERROR and its gryt_pairing and reason details."
