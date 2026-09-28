@@ -1,5 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
+import type { ChunkStore } from "./chunks.js";
+
 /** The relay's half of pairing, in memory only. See docs/pairing-design.md in Gryt-chat/crypto. */
 export const LIMITS = {
   openMs: 5 * 60_000,
@@ -105,6 +107,7 @@ export interface RelayOptions {
   limits?: Partial<Limits>;
   now?: () => number;
   log?: (line: string) => void;
+  chunks?: ChunkStore;
 }
 
 export class Relay {
@@ -118,6 +121,7 @@ export class Relay {
   private readonly refusals = new Map<string, number>();
   private readonly now: () => number;
   private readonly log: (line: string) => void;
+  readonly chunks: ChunkStore | null;
   private storedBytes = 0;
   private lastFlush: number;
   private timer: NodeJS.Timeout | null = null;
@@ -126,11 +130,12 @@ export class Relay {
     this.limits = { ...LIMITS, ...options.limits };
     this.now = options.now ?? Date.now;
     this.log = options.log ?? ((line) => console.log(line));
+    this.chunks = options.chunks ?? null;
     this.lastFlush = this.now();
   }
 
   start(intervalMs = 5000): void {
-    this.timer ??= setInterval(() => this.sweep(), intervalMs);
+    this.timer ??= setInterval(() => void this.sweep(), intervalMs);
     this.timer.unref();
   }
 
@@ -272,20 +277,78 @@ export class Relay {
     this.end(session, "closed");
   }
 
-  sweep(): void {
+  /** A: one sealed history chunk into slot `n`. Only after the reveal. */
+  async putChunk(id: string, token: string | undefined, ip: string, slot: string, body: unknown): Promise<void> {
+    const session = this.find(id);
+    if (this.auth(session, token) !== "a") throw this.refuse(403, "wrong_side");
+    if (session.state === "open" || session.state === "claimed") throw this.refuse(409, "not_revealed");
+    const store = this.store();
+    const n = this.slot(slot, store);
+    const bytes = typeof body === "string" && body.length > 0 && B64U.test(body) ? Buffer.from(body, "base64url") : null;
+    if (!bytes || bytes.toString("base64url") !== body) throw this.refuse(400, "invalid_body");
+    if (bytes.length > store.limits.chunkBytes) throw this.refuse(413, "too_large");
+    await this.counted(store.put(session.id, n, bytes, ip));
+    this.find(id);
+  }
+
+  /** N: the chunk in slot `n` as base64url. */
+  async getChunk(id: string, token: string | undefined, slot: string): Promise<string> {
+    const session = this.find(id);
+    if (this.auth(session, token) !== "n") throw this.refuse(403, "wrong_side");
+    const store = this.store();
+    const body = await this.counted(store.get(session.id, this.slot(slot, store)));
+    if (!body) throw this.refuse(404, "not_found");
+    return body.toString("base64url");
+  }
+
+  async deleteChunk(id: string, token: string | undefined, slot: string): Promise<void> {
+    const session = this.find(id);
+    if (this.auth(session, token) !== "n") throw this.refuse(403, "wrong_side");
+    const store = this.store();
+    await store.delete(session.id, this.slot(slot, store));
+  }
+
+  sweep(): Promise<void> {
     const t = this.now();
     for (const session of this.sessions.values()) if (session.expiresAt <= t) this.end(session, "expired");
     for (const [id, e] of this.ended) if (e.until <= t) this.ended.delete(id);
     for (const [ip, h] of this.opened) if (h.start + this.limits.sessionWindowMs <= t) this.opened.delete(ip);
     for (const [ip, h] of this.codeFailures) if (h.start + this.limits.codeFailureWindowMs <= t) this.codeFailures.delete(ip);
     for (const [ip, until] of this.blocked) if (until <= t) this.blocked.delete(ip);
-    if (t - this.lastFlush >= 60_000) {
+    const flush = t - this.lastFlush >= 60_000;
+    if (flush) {
+      const stored = this.chunks?.flushStats();
+      if (stored?.count) this.log(`pairing: stored ${stored.count} chunks, ${(stored.bytes / 1048576).toFixed(1)} MiB`);
       if (this.refusals.size > 0) {
         const counts = [...this.refusals].map(([reason, n]) => `${reason}=${n}`).join(" ");
         this.log(`pairing: refused ${counts}`);
         this.refusals.clear();
       }
       this.lastFlush = t;
+    }
+    const swept = this.chunks?.sweep((id) => this.sessions.has(id), flush);
+    return (swept ?? Promise.resolve()).catch((e) => {
+      this.log(`pairing: the chunk sweep failed: ${(e as NodeJS.ErrnoException)?.code ?? "unknown"}`);
+    });
+  }
+
+  private store(): ChunkStore {
+    if (!this.chunks) throw this.refuse(404, "not_found");
+    return this.chunks;
+  }
+
+  private slot(value: string, store: ChunkStore): number {
+    const n = /^(0|[1-9]\d{0,5})$/.test(value) ? Number(value) : -1;
+    if (n < 0 || n > store.limits.maxSlot) throw this.refuse(400, "invalid_slot");
+    return n;
+  }
+
+  private async counted<T>(work: Promise<T>): Promise<T> {
+    try {
+      return await work;
+    } catch (e) {
+      if (e instanceof RelayError) this.refusals.set(e.code, (this.refusals.get(e.code) ?? 0) + 1);
+      throw e;
     }
   }
 
@@ -334,6 +397,7 @@ export class Relay {
     this.sessions.delete(session.id);
     if (session.code) this.codes.delete(session.code);
     this.storedBytes -= session.bytes;
+    this.chunks?.drop(session.id);
     this.ended.set(session.id, { reason, until: this.now() + this.limits.tombstoneMs });
     for (const wake of [...session.waiters]) wake();
     this.log(`pairing: session ${reason} after ${seconds(this.now() - session.createdAt)}, ${session.state}`);
