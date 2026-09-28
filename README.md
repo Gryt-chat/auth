@@ -199,6 +199,38 @@ The script names both failures now rather than retrying ten times and giving up:
 `Account disabled` prints these steps, and a wrong password says so and stops. Neither
 retries, because neither gets better on the second attempt.
 
+### Turning on device linking
+
+Linking a new device uses the OAuth device grant on `gryt-web`, which is off until this
+runs. `bootstrap/enable_device_grant.py` sets three client attributes through the admin API:
+
+| Attribute | Value |
+|-----------|-------|
+| `oauth2.device.authorization.grant.enabled` | `"true"` |
+| `oauth2.device.code.lifespan` | `"300"`, five minutes instead of the realm's ten |
+| `oauth2.device.polling.interval` | `"5"` |
+
+It's not in `gryt-realm.json` on purpose, since that file only takes effect through an import,
+and an import deletes every account. The admin console has a toggle for the first one, but
+the two numbers have no field there.
+
+It needs an admin, so make a temporary one as above, then:
+
+```bash
+docker compose -f docker-compose.keycloak.yml -p auth --profile device-grant run --rm --no-deps -T \
+  -e GRYT_KEYCLOAK_ADMIN_USERNAME=tmpadmin \
+  -e GRYT_KEYCLOAK_ADMIN_PASSWORD='<the same one>' \
+  keycloak-device-grant
+```
+
+Add `--dry-run` at the end to see what it would change without changing it. It prints the
+three values before and after, reads the client and writes it back with only those changed,
+and does nothing on a second run. The `device-grant` profile keeps a plain `up` from ever
+running it.
+
+To turn it off again, flip the toggle under Clients → gryt-web → Capability config in the admin
+console, or set the first attribute to `"false"` the same way.
+
 ## Monitoring and alerts
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails

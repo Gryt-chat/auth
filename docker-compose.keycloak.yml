@@ -423,6 +423,26 @@ services:
       - gryt-auth-network
     restart: "no"
 
+  # Turns on the device grant for gryt-web, for linking a device. The profile keeps `up` from
+  # running it; run it by name with --no-deps. See "Turning on device linking" in the README.
+  keycloak-device-grant:
+    image: python:3.13-alpine
+    profiles: ["device-grant"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KC_URL: http://keycloak:8080
+      GRYT_REALM: ${GRYT_REALM:-gryt}
+      GRYT_KEYCLOAK_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+    entrypoint: ["python", "/bootstrap/enable_device_grant.py"]
+    volumes:
+      - ./bootstrap/enable_device_grant.py:/bootstrap/enable_device_grant.py:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
   identity:
     build:
       context: ./identity
