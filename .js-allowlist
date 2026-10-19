@@ -1,0 +1,11 @@
+# ts-node's ESM loader hook, which Node loads before any TypeScript can run.
+identity/test/ts-node.mjs
+
+# Still to move to TypeScript (GRYT-1800).
+login-theme/scripts/account-tokens.mjs
+login-theme/scripts/admin-tokens.mjs
+login-theme/scripts/check-built-css.mjs
+login-theme/stylelint.config.js
+scripts/check-comment-length.mjs
+scripts/check-keycloak-version.mjs
+scripts/check-retired-logo.mjs
