@@ -11,7 +11,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
 import { Relay, type Limits } from "../src/pairing/relay.js";
-import { pairingRoutes, trustedProxies } from "../src/pairing/routes.js";
+import { pairingRoutes, trustedProxies, visitorLocation } from "../src/pairing/routes.js";
 
 let clock = 0;
 let logs: string[] = [];
@@ -282,4 +282,13 @@ test("a request body past the envelope cap is refused before it's parsed", async
   const s = await revealed();
   const huge = await call("POST", `/sessions/${s.id}/messages`, { token: s.aToken, body: { type: "sealed", body: "A".repeat(400_000) } });
   assert.deepEqual(huge, { status: 413, json: { error: "too_large" } });
+});
+
+test("a city in UTF-8 that came through as Latin-1 reads right, and a plain one is left alone", () => {
+  const from = (headers: Record<string, string>) => visitorLocation((name) => headers[name]);
+  const latin1 = (city: string) => Buffer.from(city, "utf8").toString("latin1");
+  assert.equal(from({ "cf-ipcountry": "NO", "cf-ipcity": latin1("Gjøvik") }), "Gjøvik, Norway");
+  assert.equal(from({ "cf-ipcountry": "NO", "cf-ipcity": "Oslo" }), "Oslo, Norway");
+  assert.equal(from({ "cf-ipcountry": "NO", "cf-ipcity": "Gjøvik" }), "Gjøvik, Norway", "already-correct text isn't mangled");
+  assert.equal(from({ "cf-ipcountry": "ES", "cf-ipcity": "M\u00e1laga" }), "Málaga, Spain", "real Latin-1 that isn't UTF-8 stays as it was");
 });

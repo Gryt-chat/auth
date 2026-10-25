@@ -30,6 +30,13 @@ export function trustedProxies(value = ""): (address: string) => boolean {
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
 
+/** Headers are read as Latin-1, but Cloudflare sends the city as UTF-8: "Gjøvik" arrives as "GjÃ¸vik". */
+function utf8FromLatin1(value: string): string {
+  if (!/[\u0080-\u00ff]/.test(value) || /[^\u0000-\u00ff]/.test(value)) return value;
+  const decoded = Buffer.from(value, "latin1").toString("utf8");
+  return decoded.includes("\uFFFD") ? value : decoded;
+}
+
 /** "Oslo, Norway" from Cloudflare's visitor location headers, or the country alone. */
 export function visitorLocation(header: (name: string) => string | undefined): string | null {
   let country: string | undefined;
@@ -41,7 +48,8 @@ export function visitorLocation(header: (name: string) => string | undefined): s
       country = undefined;
     }
   }
-  const city = header("cf-ipcity")?.replace(/[\p{C}]/gu, "").trim().slice(0, 64);
+  const raw = header("cf-ipcity");
+  const city = raw === undefined ? undefined : utf8FromLatin1(raw).replace(/[\p{C}]/gu, "").trim().slice(0, 64);
   const parts = [city, country].filter((p): p is string => Boolean(p));
   return parts.length > 0 ? parts.join(", ") : null;
 }
