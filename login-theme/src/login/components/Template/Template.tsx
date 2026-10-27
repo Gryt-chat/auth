@@ -21,6 +21,21 @@ const severityByMessageType = {
   info: "info",
 } as const;
 
+/* Same host as this page, but under KC_HTTP_RELATIVE_PATH, so the prefix is taken off a URL
+   Keycloak built rather than guessed. Absolute and root-relative both come out right. */
+function endSessionUrl(anyKeycloakUrl: string, realmName: string, clientId: string): string {
+  const cut = anyKeycloakUrl.indexOf("/realms/");
+  const prefix = cut === -1 ? "" : anyKeycloakUrl.slice(0, cut);
+  const url = new URL(
+    `${prefix}/realms/${encodeURIComponent(realmName)}/protocol/openid-connect/logout`,
+    window.location.origin,
+  );
+  /* There is no id_token to hint with from here, so Keycloak asks on logout-confirm.ftl,
+     which this theme styles. client_id is what gives that page its way back. */
+  url.searchParams.set("client_id", clientId);
+  return url.toString();
+}
+
 export function Template(props: {
   displayInfo?: boolean;
   displayMessage?: boolean;
@@ -129,14 +144,30 @@ export function Template(props: {
                   <span id="kc-attempted-username">
                     {kcContext.auth!.attemptedUsername}
                   </span>
-                  <a
-                    id="reset-login"
-                    className="gryt-auth-link"
-                    href={kcContext.url.loginRestartFlowUrl}
-                    aria-label={msgStr("restartLoginTooltip")}
-                  >
-                    {msg("restartLoginTooltip")}
-                  </a>
+                  {/* On login.ftl the name came off a session Keycloak is re-authenticating, so
+                      restarting returns the same person. A second factor has none to end yet. */}
+                  {kcContext.pageId === "login.ftl" ? (
+                    <a
+                      id="reset-login"
+                      className="gryt-auth-link"
+                      href={endSessionUrl(
+                        kcContext.url.loginRestartFlowUrl,
+                        kcContext.realm.name,
+                        kcContext.client.clientId,
+                      )}
+                    >
+                      Sign out of this account
+                    </a>
+                  ) : (
+                    <a
+                      id="reset-login"
+                      className="gryt-auth-link"
+                      href={kcContext.url.loginRestartFlowUrl}
+                      aria-label={msgStr("restartLoginTooltip")}
+                    >
+                      {msg("restartLoginTooltip")}
+                    </a>
+                  )}
                 </div>
               ) : (
                 <h1 id="kc-page-title" className="gryt-auth-title">
