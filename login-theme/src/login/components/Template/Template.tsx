@@ -21,6 +21,21 @@ const severityByMessageType = {
   info: "info",
 } as const;
 
+/* Same host as this page, but under KC_HTTP_RELATIVE_PATH, so the prefix is taken off a URL
+   Keycloak built rather than guessed. Absolute and root-relative both come out right. */
+function endSessionUrl(anyKeycloakUrl: string, realmName: string, clientId: string): string {
+  const cut = anyKeycloakUrl.indexOf("/realms/");
+  const prefix = cut === -1 ? "" : anyKeycloakUrl.slice(0, cut);
+  const url = new URL(
+    `${prefix}/realms/${encodeURIComponent(realmName)}/protocol/openid-connect/logout`,
+    window.location.origin,
+  );
+  /* There is no id_token to hint with from here, so Keycloak asks on logout-confirm.ftl,
+     which this theme styles. client_id is what gives that page its way back. */
+  url.searchParams.set("client_id", clientId);
+  return url.toString();
+}
+
 export function Template(props: {
   displayInfo?: boolean;
   displayMessage?: boolean;
@@ -136,6 +151,19 @@ export function Template(props: {
                     aria-label={msgStr("restartLoginTooltip")}
                   >
                     {msg("restartLoginTooltip")}
+                  </a>
+                  {/* Restarting the flow keeps the browser's Keycloak session, so it comes
+                      back as the same person. This ends the session itself. */}
+                  <a
+                    id="gryt-end-session"
+                    className="gryt-auth-link"
+                    href={endSessionUrl(
+                      kcContext.url.loginRestartFlowUrl,
+                      kcContext.realm.name,
+                      kcContext.client.clientId,
+                    )}
+                  >
+                    Sign out of this account
                   </a>
                 </div>
               ) : (
