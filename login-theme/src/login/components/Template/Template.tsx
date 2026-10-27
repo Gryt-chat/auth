@@ -144,27 +144,30 @@ export function Template(props: {
                   <span id="kc-attempted-username">
                     {kcContext.auth!.attemptedUsername}
                   </span>
-                  <a
-                    id="reset-login"
-                    className="gryt-auth-link"
-                    href={kcContext.url.loginRestartFlowUrl}
-                    aria-label={msgStr("restartLoginTooltip")}
-                  >
-                    {msg("restartLoginTooltip")}
-                  </a>
-                  {/* Restarting the flow keeps the browser's Keycloak session, so it comes
-                      back as the same person. This ends the session itself. */}
-                  <a
-                    id="gryt-end-session"
-                    className="gryt-auth-link"
-                    href={endSessionUrl(
-                      kcContext.url.loginRestartFlowUrl,
-                      kcContext.realm.name,
-                      kcContext.client.clientId,
-                    )}
-                  >
-                    Sign out of this account
-                  </a>
+                  {/* On login.ftl the name came off a session Keycloak is re-authenticating, so
+                      restarting returns the same person. A second factor has none to end yet. */}
+                  {kcContext.pageId === "login.ftl" ? (
+                    <a
+                      id="reset-login"
+                      className="gryt-auth-link"
+                      href={endSessionUrl(
+                        kcContext.url.loginRestartFlowUrl,
+                        kcContext.realm.name,
+                        kcContext.client.clientId,
+                      )}
+                    >
+                      Sign out of this account
+                    </a>
+                  ) : (
+                    <a
+                      id="reset-login"
+                      className="gryt-auth-link"
+                      href={kcContext.url.loginRestartFlowUrl}
+                      aria-label={msgStr("restartLoginTooltip")}
+                    >
+                      {msg("restartLoginTooltip")}
+                    </a>
+                  )}
                 </div>
               ) : (
                 <h1 id="kc-page-title" className="gryt-auth-title">
