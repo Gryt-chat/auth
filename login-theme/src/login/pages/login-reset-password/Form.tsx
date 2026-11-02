@@ -35,7 +35,6 @@ export function Form() {
                 : msgStr("email")
           }
           autoFocus
-          defaultValue={kcContext.auth.attemptedUsername ?? ""}
           aria-invalid={kcContext.messagesPerField.existsError("username")}
         />
         {kcContext.messagesPerField.existsError("username") && (

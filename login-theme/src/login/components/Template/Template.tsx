@@ -21,12 +21,14 @@ const severityByMessageType = {
   info: "info",
 } as const;
 
-/* The username is the email here, and people sign in on stream. Same mask as the desktop sidebar. */
+/* The username is the email here, and people sign in on stream. A personal domain identifies someone too. */
 function maskEmail(email: string): string {
   const at = email.lastIndexOf("@");
   if (at < 1) return email;
   const name = email.slice(0, at);
-  return `${name[0]}•••${name.length > 1 ? name[name.length - 1] : ""}${email.slice(at)}`;
+  const domain = email.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  return `${name[0]}•••@${domain[0] ?? ""}•••${dot > 0 ? domain.slice(dot) : ""}`;
 }
 
 /* Same host as this page, but under KC_HTTP_RELATIVE_PATH, so the prefix is taken off a URL
