@@ -21,6 +21,14 @@ const severityByMessageType = {
   info: "info",
 } as const;
 
+/* The username is the email here, and people sign in on stream. Same mask as the desktop sidebar. */
+function maskEmail(email: string): string {
+  const at = email.lastIndexOf("@");
+  if (at < 1) return email;
+  const name = email.slice(0, at);
+  return `${name[0]}•••${name.length > 1 ? name[name.length - 1] : ""}${email.slice(at)}`;
+}
+
 /* Same host as this page, but under KC_HTTP_RELATIVE_PATH, so the prefix is taken off a URL
    Keycloak built rather than guessed. Absolute and root-relative both come out right. */
 function endSessionUrl(anyKeycloakUrl: string, realmName: string, clientId: string): string {
@@ -142,7 +150,7 @@ export function Template(props: {
               {showAttemptedUsername ? (
                 <div id="kc-username" className="gryt-auth-attempted">
                   <span id="kc-attempted-username">
-                    {kcContext.auth!.attemptedUsername}
+                    {maskEmail(kcContext.auth!.attemptedUsername)}
                   </span>
                   {/* On login.ftl the name came off a session Keycloak is re-authenticating, so
                       restarting returns the same person. A second factor has none to end yet. */}
