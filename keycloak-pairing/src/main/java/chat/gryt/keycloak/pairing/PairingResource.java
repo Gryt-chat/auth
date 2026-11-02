@@ -2,6 +2,7 @@ package chat.gryt.keycloak.pairing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -80,6 +81,40 @@ public class PairingResource implements RealmResourceProvider {
     @Produces(MediaType.APPLICATION_JSON)
     public Response approve(String body) {
         return new Call(session).run(body);
+    }
+
+    /**
+     * GET /realms/{realm}/gryt-pairing/whoami: the masked email of this browser's session, so the
+     * sign-in page on gryt.chat can ask "sign in as X?". Only the masked form ever leaves here.
+     */
+    @GET
+    @Path("whoami")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response whoami() {
+        RealmModel realm = session.getContext().getRealm();
+        ClientModel web = realm.getClientByClientId(CLIENT_ID);
+        Cors cors = Cors.builder().auth().allowedMethods("GET");
+        cors = web != null ? cors.allowedOrigins(session, web) : cors.allowedOrigins(new String[0]);
+
+        AuthenticationManager.AuthResult auth = new AppAuthManager().authenticateIdentityCookie(session, realm);
+        if (auth == null || auth.user() == null) {
+            return cors.add(Response.status(401).header("Cache-Control", "no-store"));
+        }
+        String email = auth.user().getEmail();
+        String shown = maskEmail(email != null ? email : auth.user().getUsername());
+        return cors.add(Response.ok(Map.of("account", shown)).header("Cache-Control", "no-store"));
+    }
+
+    /** Must match the mask in Gryt-chat/client's sidebar and Gryt-chat/mobile's maskEmail. */
+    static String maskEmail(String email) {
+        int at = email.lastIndexOf('@');
+        if (at < 1) {
+            return email.isEmpty() ? "" : email.charAt(0) + "•••";
+        }
+        String domain = email.substring(at + 1);
+        int dot = domain.lastIndexOf('.');
+        String first = domain.isEmpty() ? "" : domain.substring(0, 1);
+        return email.charAt(0) + "•••@" + first + "•••" + (dot > 0 ? domain.substring(dot) : "");
     }
 
     /** One request's state, so a refusal can deny the code and count the failure in one place. */
