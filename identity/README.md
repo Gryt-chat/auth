@@ -92,6 +92,7 @@ treat a `507` as the end of what fits, and mark the history as cut short.
 | `GRYT_CA_PRIVATE_KEY_FILE` | Path to a PEM-encoded ECDSA P-256 private key | _(auto-generated)_ |
 | `GRYT_IDENTITY_DATA_DIR` | Directory for auto-generated CA key storage | `./data` |
 | `GRYT_CERT_LIFETIME_DAYS` | Certificate validity period in days | `30` |
+| `GRYT_ACCOUNT_KEY_GATE` | `learn` records the seed key each account's devices prove; `enforce` refuses a certificate to a device with a new one until it's linked, or a 30-day reset finishes; `off` skips both | `learn` |
 | `GRYT_PAIRING_TRUSTED_PROXIES` | Comma-separated addresses or CIDR ranges allowed to set `CF-Connecting-IP` | _(none)_ |
 | `GRYT_PAIRING_CHUNKS_SESSION_MIB` | History chunks one pairing can store, in MiB | `256` |
 | `GRYT_PAIRING_CHUNKS_TOTAL_MIB` | History chunks stored across every pairing, in MiB | `2048` |

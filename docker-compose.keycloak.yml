@@ -458,6 +458,8 @@ services:
       GRYT_CA_PRIVATE_KEY_FILE: ${GRYT_CA_PRIVATE_KEY_FILE:-}
       GRYT_IDENTITY_DATA_DIR: /app/data
       GRYT_CERT_LIFETIME_DAYS: ${GRYT_CERT_LIFETIME_DAYS:-30}
+      # learn records each account's seed key, enforce refuses new ones (GRYT-2016). Records go under /app/data/accounts.
+      GRYT_ACCOUNT_KEY_GATE: ${GRYT_ACCOUNT_KEY_GATE:-learn}
       GRYT_PAIRING_TRUSTED_PROXIES: ${GRYT_PAIRING_TRUSTED_PROXIES:-}
       # History chunks go under /app/data/pairing, on the same disk as the Keycloak database.
       GRYT_PAIRING_CHUNKS_SESSION_MIB: ${GRYT_PAIRING_CHUNKS_SESSION_MIB:-256}
