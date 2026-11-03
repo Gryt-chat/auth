@@ -84,3 +84,9 @@ test("a reset finishes and replaces the key, at once when the known keys are unu
   assert.ok(due !== null && due <= clock);
   assert.deepEqual(await keys.decide("dormant", phone.thumb, "enforce"), { ok: true });
 });
+
+test("two devices renewing at the same moment are both recorded", async () => {
+  const seeds = await Promise.all([seedKey(), seedKey(), seedKey(), seedKey()]);
+  await Promise.all(seeds.map((s) => keys.decide("busy", s.thumb, "learn")));
+  assert.equal((await keys.read("busy")).keys.length, 4);
+});

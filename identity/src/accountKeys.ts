@@ -38,7 +38,20 @@ export async function verifyProof(proof: unknown, sub: string, certJwk: JWK, now
 export type CertDecision = { ok: true } | { ok: false; resetAt: number | null };
 
 export class AccountKeys {
+  /* Every change reads the file, edits it and writes it back, so two at once for one account would lose one. */
+  private queues = new Map<string, Promise<unknown>>();
+
   constructor(private dir: string, private now: () => number = Date.now) {}
+
+  private serial<T>(sub: string, work: () => Promise<T>): Promise<T> {
+    const run = (this.queues.get(sub) ?? Promise.resolve()).then(work, work);
+    const done = run.catch(() => {});
+    this.queues.set(sub, done);
+    void done.then(() => {
+      if (this.queues.get(sub) === done) this.queues.delete(sub);
+    });
+    return run;
+  }
 
   private file(sub: string) {
     return join(this.dir, `${createHash("sha256").update(sub).digest("hex")}.json`);
@@ -69,6 +82,10 @@ export class AccountKeys {
   /** Whether this seed key may get a certificate, recording it as it goes. */
   async decide(sub: string, thumb: string | null, mode: GateMode): Promise<CertDecision> {
     if (mode === "off") return { ok: true };
+    return this.serial(sub, () => this.decideNow(sub, thumb, mode));
+  }
+
+  private async decideNow(sub: string, thumb: string | null, mode: Exclude<GateMode, "off">): Promise<CertDecision> {
     const rec = await this.read(sub);
     const now = this.now();
     const known = thumb ? rec.keys.find((k) => k.thumb === thumb) : undefined;
@@ -92,25 +109,29 @@ export class AccountKeys {
   }
 
   /** Lost every device and the words: this seed key takes over later. Asking again doesn't restart the clock. */
-  async requestReset(sub: string, thumb: string): Promise<number | null> {
-    const rec = await this.read(sub);
-    if (rec.keys.some((k) => k.thumb === thumb)) return null;
-    if (rec.reset?.thumb !== thumb) {
-      rec.reset = { thumb, at: this.now() + RESET_DELAY_MS };
-      await this.write(sub, rec);
-    }
-    return this.resetDueAt(rec);
+  requestReset(sub: string, thumb: string): Promise<number | null> {
+    return this.serial(sub, async () => {
+      const rec = await this.read(sub);
+      if (rec.keys.some((k) => k.thumb === thumb)) return null;
+      if (rec.reset?.thumb !== thumb) {
+        rec.reset = { thumb, at: this.now() + RESET_DELAY_MS };
+        await this.write(sub, rec);
+      }
+      return this.resetDueAt(rec);
+    });
   }
 
   /** "That wasn't me": only a known seed key can stop it. */
-  async cancelReset(sub: string, thumb: string): Promise<boolean> {
-    const rec = await this.read(sub);
-    if (!rec.keys.some((k) => k.thumb === thumb)) return false;
-    if (rec.reset) {
-      rec.reset = null;
-      await this.write(sub, rec);
-    }
-    return true;
+  cancelReset(sub: string, thumb: string): Promise<boolean> {
+    return this.serial(sub, async () => {
+      const rec = await this.read(sub);
+      if (!rec.keys.some((k) => k.thumb === thumb)) return false;
+      if (rec.reset) {
+        rec.reset = null;
+        await this.write(sub, rec);
+      }
+      return true;
+    });
   }
 
   /** What a device with this seed key should know: whether it's on record, and any reset under way. */
