@@ -94,6 +94,8 @@ async function seedKeyFrom(c: { req: { header: (n: string) => string | undefined
 app.post("/api/v1/account-key/status", async (c) => {
   const who = await seedKeyFrom(c);
   if (!who) return c.json({ error: "invalid_proof" }, 401);
+  // Both apps ask on every sign-in, so learn mode fills in days rather than at the next certificate renewal.
+  await accountKeys.decide(who.sub, who.thumb, gateMode());
   return c.json(await accountKeys.status(who.sub, who.thumb));
 });
 
