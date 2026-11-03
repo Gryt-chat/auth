@@ -6,6 +6,7 @@ import { cors } from "hono/cors";
 import { getCAPublicJwk } from "./keys.js";
 import { verifyKeycloakToken } from "./keycloak.js";
 import { issueCertificate } from "./certificate.js";
+import { AccountKeys, gateModeFromEnv, verifyProof } from "./accountKeys.js";
 import { ChunkStore, chunkLimitsFromEnv } from "./pairing/chunks.js";
 import { Relay } from "./pairing/relay.js";
 import { pairingRoutes, trustedProxies } from "./pairing/routes.js";
@@ -15,6 +16,8 @@ export const chunks = new ChunkStore(join(process.env.GRYT_IDENTITY_DATA_DIR || 
   limits: chunkLimitsFromEnv(process.env),
 });
 export const relay = new Relay({ chunks });
+export const accountKeys = new AccountKeys(join(process.env.GRYT_IDENTITY_DATA_DIR || "./data", "accounts"));
+const gateMode = () => gateModeFromEnv(process.env.GRYT_ACCOUNT_KEY_GATE);
 
 app.use("*", cors());
 app.route("/api/v1/pairing", pairingRoutes(relay, trustedProxies(process.env.GRYT_PAIRING_TRUSTED_PROXIES)));
@@ -42,7 +45,7 @@ app.post("/api/v1/certificate", async (c) => {
     return c.json({ error: "invalid_token", message: `Keycloak token validation failed: ${msg}` }, 401);
   }
 
-  let body: { jwk?: JsonWebKey };
+  let body: { jwk?: JsonWebKey; proof?: string };
   try {
     body = await c.req.json();
   } catch {
@@ -61,6 +64,12 @@ app.post("/api/v1/certificate", async (c) => {
     return c.json({ error: "invalid_jwk", message: "Do not send private key material. Send the public key only." }, 400);
   }
 
+  const seedKey = await verifyProof(body.proof, user.sub, jwk as Record<string, string>);
+  const decision = await accountKeys.decide(user.sub, seedKey, gateMode());
+  if (!decision.ok) {
+    return c.json({ error: "approval_required", message: "Link this device from one that's already signed in, or use your 24 words.", resetAt: decision.resetAt }, 403);
+  }
+
   try {
     const certificate = await issueCertificate(user, jwk);
     return c.json({ certificate });
@@ -69,4 +78,34 @@ app.post("/api/v1/certificate", async (c) => {
     console.error("Certificate issuance failed:", msg);
     return c.json({ error: "issuance_failed", message: "Failed to issue certificate." }, 500);
   }
+});
+
+/* Reset, cancel and status all take the same { jwk, proof } a certificate request does. */
+async function seedKeyFrom(c: { req: { header: (n: string) => string | undefined; json: () => Promise<unknown> } }) {
+  const auth = c.req.header("authorization");
+  if (!auth?.startsWith("Bearer ")) return null;
+  const user = await verifyKeycloakToken(auth.slice(7)).catch(() => null);
+  const body = (await c.req.json().catch(() => null)) as { jwk?: Record<string, string>; proof?: string } | null;
+  if (!user || !body?.jwk) return null;
+  const thumb = await verifyProof(body.proof, user.sub, body.jwk);
+  return thumb ? { sub: user.sub, thumb } : null;
+}
+
+app.post("/api/v1/account-key/status", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  return c.json(await accountKeys.status(who.sub, who.thumb));
+});
+
+app.post("/api/v1/account-key/reset", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  const at = await accountKeys.requestReset(who.sub, who.thumb);
+  return at === null ? c.json({ error: "already_known" }, 409) : c.json({ at });
+});
+
+app.post("/api/v1/account-key/reset/cancel", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  return (await accountKeys.cancelReset(who.sub, who.thumb)) ? c.json({ ok: true }) : c.json({ error: "not_yours" }, 403);
 });
