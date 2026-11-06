@@ -13,7 +13,7 @@ services:
           -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/keys/known_hosts \
           -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
           -L 0.0.0.0:9000:127.0.0.1:19000 -L 0.0.0.0:9187:127.0.0.1:19187 \
-          "${GRYT_METRICS_SSH_TARGET:-root@193.200.238.156}"
+          "${GRYT_METRICS_SSH_TARGET:?user@host for the tunnel, in .env}"
     volumes:
       - ${GRYT_METRICS_KEY_DIR:-/boot/config/gryt-backup}:/keys:ro
     networks:
