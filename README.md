@@ -236,12 +236,34 @@ console, or set the first attribute to `"false"` the same way.
 Production auth runs on the Gigahost VPS, next to the WireGuard hub every voice call goes through, so it starts with memory limits and only the services it needs:
 
 ```bash
-docker compose -f docker-compose.keycloak.yml -f docker-compose.vps.yml -p auth up -d postgres keycloak identity pg-backup
+docker compose -f docker-compose.keycloak.yml -f docker-compose.vps.yml -p auth up -d postgres keycloak identity pg-backup postgres-exporter
 ```
 
-Keycloak and identity listen on 127.0.0.1 there (`GRYT_KEYCLOAK_BIND`, `GRYT_IDENTITY_BIND`), and the VPS's cloudflared tunnel carries `auth.gryt.chat` and `id.gryt.chat`. Monitoring stays where it was. Check `GRYT_IMPORT_REALM=0` before every `up`, as anywhere else.
+Keycloak and identity listen on 127.0.0.1 there (`GRYT_KEYCLOAK_BIND`, `GRYT_IDENTITY_BIND`), and the VPS's cloudflared tunnel carries `auth.gryt.chat` and `id.gryt.chat`. Keycloak's metrics and postgres-exporter are on `127.0.0.1:19000` and `127.0.0.1:19187`, for Unraid's tunnel below. Check `GRYT_IMPORT_REALM=0` before every `up`, as anywhere else.
 
 ## Monitoring and alerts
+
+Monitoring runs on Unraid since auth moved to the VPS (GRYT-2038). Unraid opens an SSH tunnel to the
+VPS with a key that can only forward to the two metrics ports, and `metrics-tunnel` answers as
+`keycloak` and `postgres-exporter`, so `prometheus.yml` didn't change. If the tunnel drops,
+`KeycloakInstanceDown` fires.
+
+```bash
+# On Unraid: a key for the tunnel. Prints the public half.
+ssh-keygen -q -t ed25519 -N "" -C unraid-gryt-auth-metrics -f /boot/config/gryt-backup/id_ed25519_metrics
+cat /boot/config/gryt-backup/id_ed25519_metrics.pub
+
+# On the VPS: pin it to the two ports. Paste the ssh-ed25519 line in place of KEY.
+echo 'restrict,port-forwarding,permitopen="127.0.0.1:19000",permitopen="127.0.0.1:19187",command="/bin/false" KEY' >> /root/.ssh/authorized_keys
+
+# On Unraid, from a checkout of this repository with a .env holding the SMTP settings and GRYT_ALERT_EMAIL.
+docker compose -f docker-compose.keycloak.yml -f docker-compose.unraid.yml -p auth-monitoring \
+  up -d --no-deps metrics-tunnel prometheus alertmanager grafana
+```
+
+`ops/unraid_probe.sh` runs as a User Script every minute and checks `auth.gryt.chat` and
+`id.gryt.chat` from the internet side. Two failures in a row send `AuthUnreachableFromOutside`
+through the same alertmanager, so a dead VPS reaches you even though the status page runs on it.
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails
 `GRYT_ALERT_EMAIL` when a rule fires. Grafana is the only one with a public address:
