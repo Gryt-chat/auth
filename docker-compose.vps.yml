@@ -1,0 +1,11 @@
+# The auth stack on the Gigahost VPS, which is also the WireGuard hub every voice call goes through (GRYT-2034).
+# Start only postgres, keycloak, identity and pg-backup there; the limits keep a busy Keycloak from starving it.
+services:
+  postgres:
+    mem_limit: 512m
+  keycloak:
+    mem_limit: 1536m
+  identity:
+    mem_limit: 256m
+  pg-backup:
+    mem_limit: 128m
