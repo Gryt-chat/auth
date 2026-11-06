@@ -3,7 +3,9 @@
 # Pulls the newest auth snapshot onto the parity array and keeps KEEP_DAYS of them.
 set -euo pipefail
 
-VPS="${VPS:-root@193.200.238.156}"
+# The host lives in a file on the flash drive, so no address is written here.
+[[ -f /boot/config/gryt-backup/auth.env ]] && . /boot/config/gryt-backup/auth.env
+VPS="${VPS:?set VPS=root@<vps> in /boot/config/gryt-backup/auth.env}"
 KEY="${KEY:-/boot/config/gryt-backup/id_ed25519_auth}"
 DEST="${DEST:-/mnt/user/gryt-backups/auth-vps}"
 KEEP_DAYS="${KEEP_DAYS:-30}"

@@ -236,12 +236,37 @@ console, or set the first attribute to `"false"` the same way.
 Production auth runs on the Gigahost VPS, next to the WireGuard hub every voice call goes through, so it starts with memory limits and only the services it needs:
 
 ```bash
-docker compose -f docker-compose.keycloak.yml -f docker-compose.vps.yml -p auth up -d postgres keycloak identity pg-backup
+docker compose -f docker-compose.keycloak.yml -f docker-compose.vps.yml -p auth up -d postgres keycloak identity pg-backup postgres-exporter
 ```
 
-Keycloak and identity listen on 127.0.0.1 there (`GRYT_KEYCLOAK_BIND`, `GRYT_IDENTITY_BIND`), and the VPS's cloudflared tunnel carries `auth.gryt.chat` and `id.gryt.chat`. Monitoring stays where it was. Check `GRYT_IMPORT_REALM=0` before every `up`, as anywhere else.
+Keycloak and identity listen on 127.0.0.1 there (`GRYT_KEYCLOAK_BIND`, `GRYT_IDENTITY_BIND`), and the VPS's cloudflared tunnel carries `auth.gryt.chat` and `id.gryt.chat`. Keycloak's metrics and postgres-exporter are on `127.0.0.1:19000` and `127.0.0.1:19187`, for Unraid's tunnel below. Check `GRYT_IMPORT_REALM=0` before every `up`, as anywhere else.
 
 ## Monitoring and alerts
+
+Monitoring runs on Unraid since auth moved to the VPS (GRYT-2038). Unraid opens an SSH tunnel to the
+VPS with a key that can only forward to the two metrics ports, and `metrics-tunnel` answers as
+`keycloak` and `postgres-exporter`, so `prometheus.yml` didn't change. If the tunnel drops,
+`KeycloakInstanceDown` fires.
+
+```bash
+# On Unraid: a key for the tunnel. Prints the public half.
+ssh-keygen -q -t ed25519 -N "" -C unraid-gryt-auth-metrics -f /boot/config/gryt-backup/id_ed25519_metrics
+cat /boot/config/gryt-backup/id_ed25519_metrics.pub
+
+# On the VPS: an account that can't log in, with the key pinned to the two ports. Paste the ssh-ed25519 line in place of KEY.
+useradd -m -s /usr/sbin/nologin gryt-metrics && install -d -m 700 -o gryt-metrics /home/gryt-metrics/.ssh
+echo 'restrict,port-forwarding,permitopen="127.0.0.1:19000",permitopen="127.0.0.1:19187" KEY' \
+  | install -m 600 -o gryt-metrics /dev/stdin /home/gryt-metrics/.ssh/authorized_keys
+
+# On Unraid, from a checkout of this repository. Its .env holds the SMTP settings, GRYT_ALERT_EMAIL
+# and GRYT_METRICS_SSH_TARGET=gryt-metrics@VPS_HOST.
+docker compose -f docker-compose.keycloak.yml -f docker-compose.unraid.yml -p auth-monitoring \
+  up -d --no-deps metrics-tunnel prometheus alertmanager grafana
+```
+
+`ops/unraid_probe.sh` runs as a User Script every minute and checks `auth.gryt.chat` and
+`id.gryt.chat` from the internet side. Two failures in a row send `AuthUnreachableFromOutside`
+through the same alertmanager, so a dead VPS reaches you even though the status page runs on it.
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails
 `GRYT_ALERT_EMAIL` when a rule fires. Grafana is the only one with a public address:
@@ -260,7 +285,7 @@ nowhere at all.
 To make that link work, open a tunnel first and leave it running:
 
 ```bash
-ssh -N -L 19093:127.0.0.1:19093 edition35
+ssh -N -L 19093:127.0.0.1:19093 dev
 ```
 
 Then the URL in the email opens the real Alertmanager. Same shape for Prometheus on 19090
@@ -273,7 +298,7 @@ for silencing an alert or reading its history.
 To prove the whole path still works without waiting for something to break:
 
 ```bash
-ssh edition35 'docker run --rm --network auth_gryt-auth-network curlimages/curl:8.11.1 \
+ssh dev 'docker run --rm --network auth_gryt-auth-network curlimages/curl:8.11.1 \
   -s -o /dev/null -w "%{http_code}\n" -X POST -H "Content-Type: application/json" \
   -d "[{\"labels\":{\"alertname\":\"DeliveryTest\"},\"annotations\":{\"summary\":\"Ignore me\"}}]" \
   http://alertmanager:9093/api/v2/alerts'
@@ -308,6 +333,9 @@ It's a pull so the VPS never holds a way into the LAN. Unraid's key can only run
 mkdir -p /boot/config/gryt-backup
 ssh-keygen -t ed25519 -N "" -C unraid-gryt-auth-backup -f /boot/config/gryt-backup/id_ed25519_auth
 cat /boot/config/gryt-backup/id_ed25519_auth.pub
+
+# On Unraid: where to pull from, kept on the flash drive rather than in this repository.
+echo 'VPS=root@VPS_HOST' > /boot/config/gryt-backup/auth.env
 
 # On the VPS. Paste the ssh-ed25519 line in place of KEY.
 install -D -m 0755 /opt/gryt-auth/auth/ops/vps_backup_export.sh /usr/local/lib/gryt/vps_backup_export.sh
@@ -402,15 +430,15 @@ forced command through it and `nologin` would refuse.
 age-keygen -o keycloak-offsite.key
 
 # 2. Bring the checkout on dev up to date and install age.
-ssh edition35 'cd /home/sivert/gryt/packages/auth && git pull \
+ssh dev 'cd /home/sivert/gryt/packages/auth && git pull \
   && sudo apt-get update && sudo apt-get install -y age'
 
 # 3. A key on dev for this job and nothing else. Prints the public half.
-ssh edition35 'sudo ssh-keygen -t ed25519 -N "" -C gryt-offsite \
+ssh dev 'sudo ssh-keygen -t ed25519 -N "" -C gryt-offsite \
   -f /root/.ssh/id_ed25519_gryt_offsite && sudo cat /root/.ssh/id_ed25519_gryt_offsite.pub'
 
 # 4. Teach dev the VPS host key, so BatchMode ssh doesn't stop to ask.
-ssh edition35 'sudo ssh-keyscan -H 193.200.238.156 | sudo tee -a /root/.ssh/known_hosts'
+ssh dev 'sudo ssh-keyscan -H VPS_HOST | sudo tee -a /root/.ssh/known_hosts'
 
 # 5. The account and the directory on the VPS.
 ssh vps 'sudo useradd -m -s /bin/sh gryt-backup \
@@ -419,7 +447,7 @@ ssh vps 'sudo useradd -m -s /bin/sh gryt-backup \
 
 # 6. The receiver, and the key from step 3 pinned to it. Paste that ssh-ed25519
 #    line in place of KEY below.
-ssh edition35 'cat /home/sivert/gryt/packages/auth/ops/offsite_receive.sh' \
+ssh dev 'cat /home/sivert/gryt/packages/auth/ops/offsite_receive.sh' \
   | ssh vps 'sudo mkdir -p /usr/local/lib/gryt \
     && sudo tee /usr/local/lib/gryt/offsite_receive.sh >/dev/null \
     && sudo chmod 755 /usr/local/lib/gryt/offsite_receive.sh'
@@ -430,16 +458,16 @@ restrict,command="/bin/sh /usr/local/lib/gryt/offsite_receive.sh" KEY
 EOF
 
 # 7. The settings on dev. Put the age1... line from step 1 in place of RECIPIENT.
-ssh edition35 'sudo tee /etc/default/gryt-offsite-backup >/dev/null \
+ssh dev 'sudo tee /etc/default/gryt-offsite-backup >/dev/null \
   && sudo chmod 600 /etc/default/gryt-offsite-backup' <<'EOF'
 GRYT_AUTH_BACKUP_DIR=/mnt/gryt-backups/keycloak
-GRYT_OFFSITE_HOST=gryt-backup@193.200.238.156
+GRYT_OFFSITE_HOST=gryt-backup@VPS_HOST
 GRYT_OFFSITE_RECIPIENT=RECIPIENT
 GRYT_OFFSITE_SSH_KEY=/root/.ssh/id_ed25519_gryt_offsite
 EOF
 
 # 8. The timer, and one run now. The first run sends the whole local window.
-ssh edition35 'sudo ln -sf /home/sivert/gryt/packages/auth/ops/offsite_backup.sh \
+ssh dev 'sudo ln -sf /home/sivert/gryt/packages/auth/ops/offsite_backup.sh \
     /usr/local/bin/gryt-offsite-backup \
   && sudo cp /home/sivert/gryt/packages/auth/ops/systemd/gryt-offsite-backup.service \
     /home/sivert/gryt/packages/auth/ops/systemd/gryt-offsite-backup.timer /etc/systemd/system/ \
@@ -449,7 +477,7 @@ ssh edition35 'sudo ln -sf /home/sivert/gryt/packages/auth/ops/offsite_backup.sh
   && sudo journalctl -u gryt-offsite-backup -n 20 --no-pager'
 
 # 9. Check it landed.
-ssh edition35 'sudo systemctl list-timers gryt-offsite-backup --no-pager'
+ssh dev 'sudo systemctl list-timers gryt-offsite-backup --no-pager'
 ssh vps 'sudo ls -1 /home/gryt-backup/keycloak | wc -l'
 ```
 
