@@ -347,6 +347,29 @@ echo 'restrict,command="/usr/local/lib/gryt/vps_backup_export.sh" KEY' >> /root/
 Unraid's User Scripts don't send alerts, so if the pull stops working, nobody hears about it.
 GRYT-1401 covers watching for that.
 
+### The standby on Unraid
+
+`ops/unraid_standby.sh check` runs nightly on Unraid. It loads the newest pulled snapshot into a
+throwaway copy of the stack (project `auth-standby`), checks there are at least 300 accounts, that
+keycloak serves the realm and that identity is healthy, then deletes it. A failure sends
+`AuthStandbyRestoreFailed` through the monitoring alertmanager. So the backups get restored for real
+every night, along the same path you'd use if the VPS were gone.
+
+It needs a copy of the VPS `.env` as `.env.standby` in the checkout, and the two jars under
+`keycloak-pairing/dist` and `login-theme/dist_keycloak`.
+
+If the VPS is gone:
+
+```bash
+# On Unraid. Starts the standby from the newest snapshot and leaves it running, listening on the LAN.
+bash ops/unraid_standby.sh up
+```
+
+Then, in Cloudflare, point `auth.gryt.chat` and `id.gryt.chat` at a tunnel on the LAN, routed to
+Unraid's `:18080` and `:18081`, and set `GRYT_PAIRING_TRUSTED_PROXIES` in `.env.standby` to that
+tunnel's address. Anything after the snapshot (at most an hour) is lost. Once `up` has run, the
+nightly check leaves the standby alone until you delete `.standby-live`.
+
 ### One copy out of the building
 
 `ops/offsite_backup.sh` runs once a day on dev, from `gryt-offsite-backup.timer`. For every
