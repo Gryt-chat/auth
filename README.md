@@ -231,6 +231,16 @@ running it.
 To turn it off again, flip the toggle under Clients → gryt-web → Capability config in the admin
 console, or set the first attribute to `"false"` the same way.
 
+## Running on the VPS
+
+Production auth runs on the Gigahost VPS, next to the WireGuard hub every voice call goes through, so it starts with memory limits and only the services it needs:
+
+```bash
+docker compose -f docker-compose.keycloak.yml -f docker-compose.vps.yml -p auth up -d postgres keycloak identity pg-backup
+```
+
+Keycloak and identity listen on 127.0.0.1 there (`GRYT_KEYCLOAK_BIND`, `GRYT_IDENTITY_BIND`), and the VPS's cloudflared tunnel carries `auth.gryt.chat` and `id.gryt.chat`. Monitoring stays where it was. Check `GRYT_IMPORT_REALM=0` before every `up`, as anywhere else.
+
 ## Monitoring and alerts
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails
