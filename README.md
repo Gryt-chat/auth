@@ -293,6 +293,32 @@ so the dumps are already off the disk the database lives on.
 They're still in the same building. A fire, a theft or ransomware on the LAN takes the
 database and all 126 backups together, and every Gryt account with them.
 
+### Pulled to Unraid every hour
+
+Since auth moved to the VPS, `pg-backup` there dumps every hour (`GRYT_BACKUP_CRON=0 * * * *`)
+into `/opt/gryt-auth/backups`. At ten past, Unraid pulls the newest dump and a copy of the
+identity volume, with the CA key, into `/mnt/user/gryt-backups/auth-vps/<dump name>/` and
+keeps 30 days.
+
+It's a pull so the VPS never holds a way into the LAN. Unraid's key can only run
+`ops/vps_backup_export.sh` there, which writes that one snapshot as a tar and nothing else.
+
+```bash
+# On Unraid. Prints the public half.
+mkdir -p /boot/config/gryt-backup
+ssh-keygen -t ed25519 -N "" -C unraid-gryt-auth-backup -f /boot/config/gryt-backup/id_ed25519_auth
+cat /boot/config/gryt-backup/id_ed25519_auth.pub
+
+# On the VPS. Paste the ssh-ed25519 line in place of KEY.
+install -D -m 0755 /opt/gryt-auth/auth/ops/vps_backup_export.sh /usr/local/lib/gryt/vps_backup_export.sh
+echo 'restrict,command="/usr/local/lib/gryt/vps_backup_export.sh" KEY' >> /root/.ssh/authorized_keys
+
+# On Unraid: ops/unraid_pull.sh as a User Script, custom schedule "10 * * * *".
+```
+
+Unraid's User Scripts don't send alerts, so if the pull stops working, nobody hears about it.
+GRYT-1401 covers watching for that.
+
 ### One copy out of the building
 
 `ops/offsite_backup.sh` runs once a day on dev, from `gryt-offsite-backup.timer`. For every
