@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs on Unraid every minute (GRYT-2038). Checks auth from the internet side, so it catches the VPS, the
-# tunnel and DNS. After two failed runs in a row it hands alertmanager an alert that lapses after five minutes.
+# tunnel and DNS. After five failed runs in a row it hands alertmanager an alert that lapses after five minutes.
 set -uo pipefail
 
 AM="${AM:-http://127.0.0.1:19093}"
@@ -18,7 +18,7 @@ fi
 n=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
 echo "$n" > "$STATE"
 echo "down (run $n): ${down[*]}" >&2
-(( n >= 2 )) || exit 1
+(( n >= 5 )) || exit 1  # the home router restarts at night
 
 ends="$(date -u -d '+5 min' +%FT%TZ)"
 for host in "${down[@]}"; do
