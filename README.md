@@ -267,7 +267,6 @@ docker compose -f docker-compose.keycloak.yml -f docker-compose.unraid.yml -p au
 `ops/unraid_probe.sh` runs as a User Script every minute and checks `auth.gryt.chat` and
 `id.gryt.chat` from the internet side. Five failures in a row send `AuthUnreachableFromOutside`
 through the same alertmanager, so a dead VPS reaches you even though the status page runs on it.
-Five rather than two because the probe runs from home, and the router restarts every night.
 
 Prometheus scrapes Keycloak and Postgres, Grafana draws it, and Alertmanager emails
 `GRYT_ALERT_EMAIL` when a rule fires. Grafana is the only one with a public address:

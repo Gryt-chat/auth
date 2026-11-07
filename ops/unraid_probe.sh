@@ -18,7 +18,7 @@ fi
 n=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
 echo "$n" > "$STATE"
 echo "down (run $n): ${down[*]}" >&2
-(( n >= 5 )) || exit 1  # the home router restarts at night
+(( n >= 5 )) || exit 1
 
 ends="$(date -u -d '+5 min' +%FT%TZ)"
 for host in "${down[@]}"; do
