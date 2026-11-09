@@ -5,7 +5,6 @@ import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-import { CHUNK_LIMITS } from "./chunks.js";
 import { Relay, RelayError } from "./relay.js";
 
 /** Addresses allowed to speak for the client through CF-Connecting-IP: the tunnel, nothing else. */
@@ -59,8 +58,9 @@ export function pairingRoutes(relay: Relay, trusted: (address: string) => boolea
   const base64 = (bytes: number) => Math.ceil((bytes * 4) / 3) + 1024;
   const tooLarge = (c: Context) => c.json({ error: "too_large" }, 413);
   const messageLimit = bodyLimit({ maxSize: base64(relay.limits.envelopeBytes), onError: tooLarge });
-  const chunkBytes = relay.chunks?.limits.chunkBytes ?? CHUNK_LIMITS.chunkBytes;
-  const chunkLimit = bodyLimit({ maxSize: base64(chunkBytes), onError: tooLarge });
+  // History goes through the user's own server (GRYT-2055). "full" is how an older app finishes the link without it.
+  const historyFull = (c: Context) => c.json({ error: "full" }, 507);
+  const chunkLimit = bodyLimit({ maxSize: 0, onError: historyFull });
 
   const client = (c: Context) => {
     const socket = getConnInfo(c).remote.address ?? "";
@@ -106,20 +106,9 @@ export function pairingRoutes(relay: Relay, trusted: (address: string) => boolea
     return c.json({ messages: await relay.poll(c.req.param("id"), bearer(c), after, wait * 1000) });
   });
 
-  routes.put("/sessions/:id/chunks/:n", async (c) => {
-    const { ip } = client(c);
-    await relay.putChunk(c.req.param("id"), bearer(c), ip, c.req.param("n"), (await json(c)).body);
-    return c.json({}, 201);
-  });
-
-  routes.get("/sessions/:id/chunks/:n", async (c) => {
-    return c.json({ body: await relay.getChunk(c.req.param("id"), bearer(c), c.req.param("n")) });
-  });
-
-  routes.delete("/sessions/:id/chunks/:n", async (c) => {
-    await relay.deleteChunk(c.req.param("id"), bearer(c), c.req.param("n"));
-    return c.body(null, 204);
-  });
+  routes.put("/sessions/:id/chunks/:n", historyFull);
+  routes.get("/sessions/:id/chunks/:n", (c) => c.json({ error: "not_found" }, 404));
+  routes.delete("/sessions/:id/chunks/:n", (c) => c.body(null, 204));
 
   routes.delete("/sessions/:id", (c) => {
     relay.close(c.req.param("id"), bearer(c));
