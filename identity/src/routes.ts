@@ -7,15 +7,11 @@ import { getCAPublicJwk } from "./keys.js";
 import { verifyKeycloakToken } from "./keycloak.js";
 import { issueCertificate } from "./certificate.js";
 import { AccountKeys, gateModeFromEnv, verifyProof } from "./accountKeys.js";
-import { ChunkStore, chunkLimitsFromEnv } from "./pairing/chunks.js";
 import { Relay } from "./pairing/relay.js";
 import { pairingRoutes, trustedProxies } from "./pairing/routes.js";
 
 export const app = new Hono();
-export const chunks = new ChunkStore(join(process.env.GRYT_IDENTITY_DATA_DIR || "./data", "pairing"), {
-  limits: chunkLimitsFromEnv(process.env),
-});
-export const relay = new Relay({ chunks });
+export const relay = new Relay();
 export const accountKeys = new AccountKeys(join(process.env.GRYT_IDENTITY_DATA_DIR || "./data", "accounts"));
 const gateMode = () => gateModeFromEnv(process.env.GRYT_ACCOUNT_KEY_GATE);
 

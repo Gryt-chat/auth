@@ -16,9 +16,9 @@ Servers and other clients verify these certificates against the public JWKS endp
 | `POST` | `/api/v1/pairing/sessions/:id/messages` | Send the reveal or a sealed message |
 | `GET` | `/api/v1/pairing/sessions/:id/messages` | Read the other side's messages, long-polling up to 25 seconds |
 | `DELETE` | `/api/v1/pairing/sessions/:id` | Cancel or finish |
-| `PUT` | `/api/v1/pairing/sessions/:id/chunks/:n` | Store a sealed history chunk in slot `n` (the approving device) |
-| `GET` | `/api/v1/pairing/sessions/:id/chunks/:n` | Fetch one (the new device) |
-| `DELETE` | `/api/v1/pairing/sessions/:id/chunks/:n` | Done with it (the new device) |
+| `PUT` | `/api/v1/pairing/sessions/:id/chunks/:n` | Always `507 full`: history goes through the user's own server |
+| `GET` | `/api/v1/pairing/sessions/:id/chunks/:n` | Always `404` |
+| `DELETE` | `/api/v1/pairing/sessions/:id/chunks/:n` | Does nothing |
 
 ### Pairing relay
 
@@ -40,28 +40,15 @@ into "Oslo, Norway" for the approving device.
 
 #### History chunks
 
-Message history is the one thing that goes on disk. The approving device uploads it in sealed
-chunks of up to 2 MiB, as `{"body": "<base64url>"}`, and the new device fetches them. The relay
-can't open them and never logs them. Each one is saved as it arrived, under
-`$GRYT_IDENTITY_DATA_DIR/pairing/<session>/<n>`. In compose that's the `gryt-identity-data`
-volume.
+The relay doesn't carry message history. Since GRYT-2055 the approving device leaves it sealed
+on one of the user's own Gryt servers, and the new device fetches it from there. The relay
+only carries the small sealed messages: the keys, the emoji check, the envelope and the list of
+chunks.
 
-A chunk goes when the new device deletes it or fetches it a second time, when its session
-closes or expires, or an hour after upload. The folder also gets emptied at startup, because
-the sessions didn't survive the restart. Only folders named like a session id get removed, so
-the CA key in the same volume is left alone.
-
-That volume sits on the same disk as Keycloak's Postgres, and a full disk takes the auth
-database down. So uploads stop with `507` when any of these is hit:
-
-| Limit | Default | Error |
-|---|---|---|
-| Chunks in one session | 256 MiB | `session_full` |
-| Chunks in total, with each file counted as 4 KiB at least | 2 GiB | `full` |
-| Free space on the volume after the upload | 5 GiB | `disk_low` |
-
-On top of that, one address can upload 1 GiB a day, then gets `429 rate_limited`. The apps
-treat a `507` as the end of what fits, and mark the history as cut short.
+The chunk endpoints are still there for apps from before that. An upload gets `507 full` before
+its body is read, which those apps take as the end of what fits, so they finish the link with no
+history. A fetch gets `404`, and a delete does nothing. Whatever an older relay left under
+`$GRYT_IDENTITY_DATA_DIR/pairing` is removed at startup.
 
 ### `POST /api/v1/certificate`
 
@@ -94,10 +81,6 @@ treat a `507` as the end of what fits, and mark the history as cut short.
 | `GRYT_CERT_LIFETIME_DAYS` | Certificate validity period in days | `30` |
 | `GRYT_ACCOUNT_KEY_GATE` | `learn` records the seed key each account's devices prove; `enforce` refuses a certificate to a device with a new one until it's linked, or a 30-day reset finishes; `off` skips both | `learn` |
 | `GRYT_PAIRING_TRUSTED_PROXIES` | Comma-separated addresses or CIDR ranges allowed to set `CF-Connecting-IP` | _(none)_ |
-| `GRYT_PAIRING_CHUNKS_SESSION_MIB` | History chunks one pairing can store, in MiB | `256` |
-| `GRYT_PAIRING_CHUNKS_TOTAL_MIB` | History chunks stored across every pairing, in MiB | `2048` |
-| `GRYT_PAIRING_CHUNKS_MIN_FREE_MIB` | Free space the volume keeps; uploads stop below it | `5120` |
-| `GRYT_PAIRING_CHUNKS_PER_IP_MIB` | History chunks one address can upload a day, in MiB | `1024` |
 
 ## Stack
 
