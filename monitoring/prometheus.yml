@@ -23,9 +23,9 @@ scrape_configs:
           - postgres-exporter:9187
 
 
-  # Public download and visitor counts; the sources refresh hourly.
+  # Serves cached counts, refreshed hourly. Under 5m, or a 30-day panel's lookback misses it.
   - job_name: reach
-    scrape_interval: 5m
+    scrape_interval: 1m
     static_configs:
       - targets:
           - reach-exporter:9800

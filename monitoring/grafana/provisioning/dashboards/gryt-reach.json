@@ -139,7 +139,9 @@
       "targets": [
         {
           "expr": "sum(gryt_server_members)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -162,7 +164,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -689,7 +691,9 @@
       "targets": [
         {
           "expr": "sum(gryt_release_downloads_total{repo=\"gryt\",kind=\"installer\"})",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -712,7 +716,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -738,7 +742,9 @@
       "targets": [
         {
           "expr": "sum(gryt_release_downloads_total{repo=\"gryt\",kind=\"update-check\"})",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -761,7 +767,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -787,7 +793,9 @@
       "targets": [
         {
           "expr": "sum(gryt_container_pulls_total{package=~\"server|sfu\"})",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -810,7 +818,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -836,7 +844,9 @@
       "targets": [
         {
           "expr": "sum(gryt_release_downloads_total{repo=\"server\"})",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -859,7 +869,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -885,7 +895,9 @@
       "targets": [
         {
           "expr": "sum(gryt_container_pulls_total{package=\"client\"})",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -908,7 +920,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -933,7 +945,9 @@
       "targets": [
         {
           "expr": "sum(gryt_npm_downloads_month)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -956,7 +970,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1138,7 +1152,9 @@
       "targets": [
         {
           "expr": "sum(gryt_github_stars)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1161,7 +1177,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1186,7 +1202,9 @@
       "targets": [
         {
           "expr": "gryt_github_followers",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1209,7 +1227,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1234,7 +1252,9 @@
       "targets": [
         {
           "expr": "sum(gryt_github_forks)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1257,7 +1277,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1282,7 +1302,9 @@
       "targets": [
         {
           "expr": "gryt_discord_members",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1305,7 +1327,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1330,7 +1352,9 @@
       "targets": [
         {
           "expr": "sum(gryt_web_visitors_day)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1353,7 +1377,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1379,7 +1403,9 @@
       "targets": [
         {
           "expr": "sum(gryt_web_pageviews_day)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1402,7 +1428,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1683,7 +1709,9 @@
       "targets": [
         {
           "expr": "sum(gryt_web_pageviews_24h_by_device)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1706,7 +1734,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
@@ -1732,7 +1760,9 @@
       "targets": [
         {
           "expr": "sum(gryt_testflight_testers)",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1755,7 +1785,7 @@
         }
       },
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "value",
         "reduceOptions": {
           "calcs": [
