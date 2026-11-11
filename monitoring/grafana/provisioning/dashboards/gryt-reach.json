@@ -13,13 +13,264 @@
   "panels": [
     {
       "type": "row",
-      "title": "People",
+      "title": "Right now",
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 0
+      },
+      "id": 99,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Online now",
+      "description": "Open connections to the Gryt servers we run. One person with the app open on two devices counts twice.",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 100,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum(gryt_socketio_connections_active)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Most online today",
+      "description": "The highest number of open connections in the last 24 hours.",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 106,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "max_over_time(sum(gryt_socketio_connections_active)[1d:5m])",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Community server members",
+      "description": "Members of the public servers we run, from each server's own count.",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 112,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum(gryt_server_members)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Servers counted",
+      "description": "Gryt servers whose online count is included.",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 118,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "count(up{job=\"gryt-servers\"} == 1)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Online",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 120,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "sum by (server) (gryt_socketio_connections_active)",
+          "legendFormat": "{{server}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "fillOpacity": 30,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "People",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
       },
       "id": 1,
       "panels": []
@@ -35,7 +286,7 @@
         "h": 5,
         "w": 4,
         "x": 0,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -83,7 +334,7 @@
         "h": 5,
         "w": 4,
         "x": 4,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -131,7 +382,7 @@
         "h": 5,
         "w": 4,
         "x": 8,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -179,7 +430,7 @@
         "h": 5,
         "w": 4,
         "x": 12,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -227,7 +478,7 @@
         "h": 5,
         "w": 4,
         "x": 16,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -276,7 +527,7 @@
         "h": 5,
         "w": 4,
         "x": 20,
-        "y": 1
+        "y": 15
       },
       "targets": [
         {
@@ -324,7 +575,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 20
       },
       "targets": [
         {
@@ -377,7 +628,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 20
       },
       "targets": [
         {
@@ -417,7 +668,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 28
       },
       "id": 10,
       "panels": []
@@ -433,7 +684,7 @@
         "h": 5,
         "w": 4,
         "x": 0,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -482,7 +733,7 @@
         "h": 5,
         "w": 4,
         "x": 4,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -531,7 +782,7 @@
         "h": 5,
         "w": 4,
         "x": 8,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -580,7 +831,7 @@
         "h": 5,
         "w": 4,
         "x": 12,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -629,7 +880,7 @@
         "h": 5,
         "w": 4,
         "x": 16,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -677,7 +928,7 @@
         "h": 5,
         "w": 4,
         "x": 20,
-        "y": 15
+        "y": 29
       },
       "targets": [
         {
@@ -725,7 +976,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 34
       },
       "targets": [
         {
@@ -768,7 +1019,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 34
       },
       "targets": [
         {
@@ -808,7 +1059,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 42
       },
       "id": 19,
       "panels": []
@@ -824,7 +1075,7 @@
         "h": 5,
         "w": 4,
         "x": 0,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -872,7 +1123,7 @@
         "h": 5,
         "w": 4,
         "x": 4,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -920,7 +1171,7 @@
         "h": 5,
         "w": 4,
         "x": 8,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -968,7 +1219,7 @@
         "h": 5,
         "w": 4,
         "x": 12,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -1016,7 +1267,7 @@
         "h": 5,
         "w": 4,
         "x": 16,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -1065,7 +1316,7 @@
         "h": 5,
         "w": 4,
         "x": 20,
-        "y": 29
+        "y": 43
       },
       "targets": [
         {
@@ -1113,7 +1364,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 48
       },
       "targets": [
         {
@@ -1161,7 +1412,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 48
       },
       "targets": [
         {
@@ -1206,7 +1457,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 56
       },
       "id": 28,
       "panels": []
@@ -1222,7 +1473,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 57
       },
       "targets": [
         {

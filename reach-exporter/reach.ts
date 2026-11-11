@@ -63,6 +63,7 @@ reg.define("gryt_npm_downloads_month", "gauge", "npm downloads over the last 30 
 reg.define("gryt_discord_members", "gauge", "Members of the Discord server, from its public invite.");
 reg.define("gryt_web_pageviews_day", "gauge", "Page views on the zone yesterday, from Cloudflare.");
 reg.define("gryt_web_visitors_day", "gauge", "Unique visitors on the zone yesterday, from Cloudflare.");
+reg.define("gryt_server_members", "gauge", "Members of a public Gryt server, from its /info.");
 reg.define("gryt_reach_source_ok", "gauge", "1 if the last read of this source worked.");
 
 const githubHeaders = (): Record<string, string> => ({
@@ -150,7 +151,13 @@ async function cloudflare(token: string, zoneId: string, zone: string): Promise<
   reg.set("gryt_web_visitors_day", { zone }, row.uniq.uniques);
 }
 
+async function members(host: string): Promise<void> {
+  const info = await json<{ members: string }>(`https://${host}/info`);
+  reg.set("gryt_server_members", { server: host }, Number(info.members));
+}
+
 async function refresh(): Promise<void> {
+  for (const host of (process.env.SERVERS ?? "").split(",").filter(Boolean)) await source(`server:${host}`, () => members(host));
   for (const repo of RELEASE_REPOS) await source(`releases:${repo}`, () => releases(repo));
   await source("github", repos);
   for (const pkg of PACKAGES) await source(`ghcr:${pkg}`, () => ghcr(pkg));

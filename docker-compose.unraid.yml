@@ -30,8 +30,14 @@ services:
     environment:
       GITHUB_TOKEN: ${GRYT_REACH_GITHUB_TOKEN:-}
       DISCORD_INVITE: ${GRYT_REACH_DISCORD_INVITE:-}
+      SERVERS: ${GRYT_REACH_SERVERS:-community.gryt.chat}
       CLOUDFLARE_API_TOKEN: ${GRYT_REACH_CLOUDFLARE_TOKEN:-}
       CLOUDFLARE_ZONE_ID: ${GRYT_REACH_CLOUDFLARE_ZONE_ID:-}
     networks:
       - gryt-auth-network
     restart: unless-stopped
+
+  # Gryt servers to count who's online on. The target files stay on the box, not in git.
+  prometheus:
+    volumes:
+      - ./monitoring/targets:/etc/prometheus/targets:ro
