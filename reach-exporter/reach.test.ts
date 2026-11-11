@@ -31,4 +31,7 @@ test("renders Prometheus text", () => {
   reg.define("b", "gauge", "B.");
   reg.set("b", {}, 1);
   assert.equal(reg.render(), '# HELP a_total A.\n# TYPE a_total counter\na_total{repo="gryt",kind="installer"} 6\n# HELP b B.\n# TYPE b gauge\nb 1\n');
+  reg.clear("a_total");
+  reg.set("a_total", { host: 'x"\\\ny' }, 1);
+  assert.match(reg.render(), /^a_total\{host="x\\"\\\\\\ny"\} 1$/m, "label values from request headers are escaped");
 });

@@ -38,10 +38,13 @@ export class Registry {
   define(name: string, type: Metric["type"], help: string): void {
     this.metrics.set(name, { help, type, samples: new Map() });
   }
-  // Labels are ours or GitHub's names, never user input, so no escaping.
   set(name: string, labels: Labels, value: number): void {
-    const key = Object.entries(labels).map(([k, v]) => `${k}="${v}"`).join(",");
+    const escape = (v: string) => v.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+    const key = Object.entries(labels).map(([k, v]) => `${k}="${escape(v)}"`).join(",");
     this.metrics.get(name)?.samples.set(key, value);
+  }
+  clear(name: string): void {
+    this.metrics.get(name)?.samples.clear();
   }
   render(): string {
     const out: string[] = [];
@@ -63,6 +66,9 @@ reg.define("gryt_npm_downloads_month", "gauge", "npm downloads over the last 30 
 reg.define("gryt_discord_members", "gauge", "Members of the Discord server, from its public invite.");
 reg.define("gryt_web_pageviews_day", "gauge", "Page views on the zone yesterday, from Cloudflare.");
 reg.define("gryt_web_visitors_day", "gauge", "Unique visitors on the zone yesterday, from Cloudflare.");
+for (const label of ["host", "country", "device"]) {
+  reg.define(`gryt_web_pageviews_24h_by_${label}`, "gauge", `Pages opened by people over the last 24 hours, by ${label}, from Cloudflare.`);
+}
 reg.define("gryt_server_members", "gauge", "Members of a public Gryt server, from its /info.");
 reg.define("gryt_reach_source_ok", "gauge", "1 if the last read of this source worked.");
 
@@ -151,6 +157,29 @@ async function cloudflare(token: string, zoneId: string, zone: string): Promise<
   reg.set("gryt_web_visitors_day", { zone }, row.uniq.uniques);
 }
 
+const BREAKDOWNS = { clientRequestHTTPHost: "host", clientCountryName: "country", clientDeviceType: "device" } as const;
+
+// Pages people opened over the last 24 hours, split three ways. Bots and assets are left out.
+async function cloudflareBreakdown(token: string, zoneId: string): Promise<void> {
+  const since = new Date(Date.now() - 86_400_000).toISOString();
+  for (const [dim, label] of Object.entries(BREAKDOWNS)) {
+    const query = `query($z:String!,$s:Time!){viewer{zones(filter:{zoneTag:$z}){httpRequestsAdaptiveGroups(limit:20,orderBy:[count_DESC],filter:{datetime_geq:$s,requestSource:"eyeball",edgeResponseContentTypeName:"html"}){count dimensions{${dim}}}}}}`;
+    const r = await json<{ data?: { viewer: { zones: { httpRequestsAdaptiveGroups: { count: number; dimensions: Record<string, string> }[] }[] } } }>(
+      "https://api.cloudflare.com/client/v4/graphql",
+      { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ query, variables: { z: zoneId, s: since } }) },
+    );
+    const rows = r.data?.viewer.zones[0]?.httpRequestsAdaptiveGroups;
+    if (!rows) throw new Error(`cloudflare: no ${label} breakdown`);
+    const name = `gryt_web_pageviews_24h_by_${label}`;
+    reg.clear(name);
+    for (const row of rows) {
+      const value = row.dimensions[dim];
+      if (label === "host" && value.includes(":")) continue;
+      reg.set(name, { [label]: value || "unknown" }, row.count);
+    }
+  }
+}
+
 async function members(host: string): Promise<void> {
   const info = await json<{ members: string }>(`https://${host}/info`);
   reg.set("gryt_server_members", { server: host }, Number(info.members));
@@ -166,6 +195,7 @@ async function refresh(): Promise<void> {
   if (env.DISCORD_INVITE) await source("discord", () => discord(env.DISCORD_INVITE as string));
   if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID) {
     await source("cloudflare", () => cloudflare(env.CLOUDFLARE_API_TOKEN as string, env.CLOUDFLARE_ZONE_ID as string, env.CLOUDFLARE_ZONE ?? "gryt.chat"));
+    await source("cloudflare:breakdown", () => cloudflareBreakdown(env.CLOUDFLARE_API_TOKEN as string, env.CLOUDFLARE_ZONE_ID as string));
   }
 }
 
