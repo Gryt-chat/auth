@@ -1,4 +1,4 @@
-# Monitoring for the VPS auth stack, run on Unraid (GRYT-2038). Start only metrics-tunnel, prometheus, alertmanager and grafana.
+# Monitoring for the VPS auth stack, run on Unraid (GRYT-2038). Start only metrics-tunnel, prometheus, alertmanager, grafana and reach-exporter.
 # The tunnel answers as keycloak and postgres-exporter, so prometheus.yml is the same file the VPS would use.
 services:
   metrics-tunnel:
@@ -20,3 +20,29 @@ services:
       gryt-auth-network:
         aliases: [keycloak, postgres-exporter]
     restart: unless-stopped
+
+  reach-exporter:
+    image: node:24-alpine
+    container_name: gryt-auth-reach-exporter
+    command: ["node", "/app/reach.ts"]
+    volumes:
+      - ./reach-exporter:/app:ro
+      # Its own folder, so the container sees the App Store Connect key and none of the SSH keys.
+      - ${GRYT_REACH_KEY_DIR:-/boot/config/gryt-reach}:/keys:ro
+    environment:
+      GITHUB_TOKEN: ${GRYT_REACH_GITHUB_TOKEN:-}
+      DISCORD_INVITE: ${GRYT_REACH_DISCORD_INVITE:-}
+      SERVERS: ${GRYT_REACH_SERVERS:-community.gryt.chat}
+      CLOUDFLARE_API_TOKEN: ${GRYT_REACH_CLOUDFLARE_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${GRYT_REACH_CLOUDFLARE_ZONE_ID:-}
+      ASC_KEY_ID: ${GRYT_REACH_ASC_KEY_ID:-}
+      ASC_ISSUER_ID: ${GRYT_REACH_ASC_ISSUER_ID:-}
+      ASC_KEY_FILE: /keys/asc.p8
+    networks:
+      - gryt-auth-network
+    restart: unless-stopped
+
+  # Gryt servers to count who's online on. The target files stay on the box, not in git.
+  prometheus:
+    volumes:
+      - ./monitoring/targets:/etc/prometheus/targets:ro

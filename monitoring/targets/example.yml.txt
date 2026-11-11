@@ -1,0 +1,3 @@
+- targets: ["<host>:9091"]
+  labels:
+    server: prod
