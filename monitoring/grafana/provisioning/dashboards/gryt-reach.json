@@ -966,8 +966,8 @@
       }
     },
     {
-      "type": "timeseries",
-      "title": "Desktop downloads per day",
+      "type": "barchart",
+      "title": "Desktop installs per version",
       "datasource": {
         "type": "prometheus"
       },
@@ -980,21 +980,20 @@
       },
       "targets": [
         {
-          "expr": "sum by (platform) (increase(gryt_release_downloads_total{repo=\"gryt\",kind=\"installer\"}[1d]))",
-          "legendFormat": "{{platform}}",
-          "refId": "A"
+          "expr": "sum by (version, order) (gryt_release_installer_downloads_by_version{repo=\"gryt\"})",
+          "legendFormat": "{{version}}",
+          "refId": "A",
+          "instant": true,
+          "format": "table"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "locale",
           "decimals": 0,
-          "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 40,
-            "stacking": {
-              "mode": "normal"
-            }
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
           },
           "thresholds": {
             "mode": "absolute",
@@ -1004,13 +1003,62 @@
                 "value": null
               }
             ]
+          },
+          "custom": {
+            "fillOpacity": 80
           }
         }
+      },
+      "description": "Installer downloads for each minor version, its patch releases added together. Auto-updates count too.",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "order",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "version",
+                "destinationType": "string"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "order"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "order": true
+            }
+          }
+        }
+      ],
+      "options": {
+        "orientation": "vertical",
+        "xField": "version",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false
+        },
+        "xTickLabelRotation": 0
       }
     },
     {
-      "type": "timeseries",
-      "title": "Server pulls per day",
+      "type": "bargauge",
+      "title": "Pulls by image",
       "datasource": {
         "type": "prometheus"
       },
@@ -1023,21 +1071,19 @@
       },
       "targets": [
         {
-          "expr": "sum by (package) (increase(gryt_container_pulls_total[1d]))",
+          "expr": "sort_desc(gryt_container_pulls_total)",
           "legendFormat": "{{package}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "locale",
           "decimals": 0,
-          "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 40,
-            "stacking": {
-              "mode": "normal"
-            }
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
           },
           "thresholds": {
             "mode": "absolute",
@@ -1048,6 +1094,18 @@
               }
             ]
           }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "text",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
         }
       }
     },
