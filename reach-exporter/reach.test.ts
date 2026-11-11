@@ -3,7 +3,13 @@ import { test } from "node:test";
 
 import { generateKeyPairSync, verify } from "node:crypto";
 
-import { ascToken, classify, packageDownloads, Registry } from "./reach.ts";
+import { ascToken, classify, minorVersion, packageDownloads, Registry } from "./reach.ts";
+
+test("groups releases by minor version", () => {
+  assert.equal(minorVersion("v1.15.9"), "1.15");
+  assert.equal(minorVersion("1.13.29-beta.2"), "1.13");
+  assert.equal(minorVersion("nightly"), null);
+});
 
 test("signs an App Store Connect token Apple can check", () => {
   const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });

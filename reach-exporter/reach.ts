@@ -60,6 +60,7 @@ export class Registry {
 
 const reg = new Registry();
 reg.define("gryt_release_downloads_total", "counter", "GitHub release asset downloads, summed over every release.");
+reg.define("gryt_release_installer_downloads_by_version", "gauge", "Installer downloads per minor version, all its patch releases together.");
 reg.define("gryt_container_pulls_total", "counter", "Container image pulls from GHCR, as the package page shows them.");
 reg.define("gryt_github_stars", "gauge", "Stars on each public repository.");
 reg.define("gryt_github_forks", "gauge", "Forks of each public repository.");
@@ -96,22 +97,36 @@ async function source(name: string, read: () => Promise<void>): Promise<void> {
   }
 }
 
+export function minorVersion(tag: string): string | null {
+  return /^v?(\d+\.\d+)\./.exec(tag)?.[1] ?? null;
+}
+
 async function releases(repo: string): Promise<void> {
   const sums = new Map<string, number>();
+  const byMinor = new Map<string, number>();
   for (let page = 1; ; page++) {
-    const list = await json<{ assets: { name: string; download_count: number }[] }[]>(
+    const list = await json<{ tag_name: string; assets: { name: string; download_count: number }[] }[]>(
       `https://api.github.com/repos/${ORG}/${repo}/releases?per_page=100&page=${page}`,
       { headers: githubHeaders() },
     );
-    for (const a of list.flatMap((r) => r.assets)) {
-      const c = classify(a.name);
-      if (c) sums.set(`${c.platform}|${c.kind}`, (sums.get(`${c.platform}|${c.kind}`) ?? 0) + a.download_count);
+    for (const r of list) {
+      for (const a of r.assets) {
+        const c = classify(a.name);
+        if (!c) continue;
+        sums.set(`${c.platform}|${c.kind}`, (sums.get(`${c.platform}|${c.kind}`) ?? 0) + a.download_count);
+        const minor = minorVersion(r.tag_name);
+        if (minor && c.kind === "installer") byMinor.set(minor, (byMinor.get(minor) ?? 0) + a.download_count);
+      }
     }
     if (list.length < 100) break;
   }
   for (const [key, n] of sums) {
     const [platform, kind] = key.split("|");
     reg.set("gryt_release_downloads_total", { repo, platform, kind }, n);
+  }
+  for (const [version, n] of byMinor) {
+    const [major, minor] = version.split(".").map(Number);
+    reg.set("gryt_release_installer_downloads_by_version", { repo, version: `v${version}`, order: String(major * 1000 + minor) }, n);
   }
 }
 
