@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { classify, packageDownloads, Registry } from "./reach.ts";
+import { generateKeyPairSync, verify } from "node:crypto";
+
+import { ascToken, classify, packageDownloads, Registry } from "./reach.ts";
+
+test("signs an App Store Connect token Apple can check", () => {
+  const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const pem = privateKey.export({ type: "pkcs8", format: "pem" }) as string;
+  const [h, b, s] = ascToken("KEY123", "issuer-id", pem, 1_700_000_000_000).split(".");
+  assert.deepEqual(JSON.parse(Buffer.from(h, "base64url").toString()), { alg: "ES256", kid: "KEY123", typ: "JWT" });
+  assert.deepEqual(JSON.parse(Buffer.from(b, "base64url").toString()), { iss: "issuer-id", iat: 1_700_000_000, exp: 1_700_000_600, aud: "appstoreconnect-v1" });
+  const sig = Buffer.from(s, "base64url");
+  assert.equal(sig.length, 64, "raw r||s, not DER");
+  assert.ok(verify("sha256", Buffer.from(`${h}.${b}`), { key: publicKey, dsaEncoding: "ieee-p1363" }, sig));
+});
 
 test("sorts release assets into installers and update checks", () => {
   assert.deepEqual(classify("latest.yml"), { platform: "windows", kind: "update-check" });

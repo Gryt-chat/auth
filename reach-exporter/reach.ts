@@ -1,5 +1,7 @@
 // Public numbers on how far Gryt reaches, as Prometheus metrics: downloads, pulls, stars, visitors.
 // Nothing here reports home; every source is a public page or an API the project owns.
+import { createPrivateKey, sign } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 
 const ORG = "Gryt-chat";
@@ -69,6 +71,7 @@ reg.define("gryt_web_visitors_day", "gauge", "Unique visitors on the zone yester
 for (const label of ["host", "country", "device"]) {
   reg.define(`gryt_web_pageviews_24h_by_${label}`, "gauge", `Pages opened by people over the last 24 hours, by ${label}, from Cloudflare.`);
 }
+reg.define("gryt_testflight_testers", "gauge", "Testers on the iPhone app's TestFlight, from App Store Connect.");
 reg.define("gryt_server_members", "gauge", "Members of a public Gryt server, from its /info.");
 reg.define("gryt_reach_source_ok", "gauge", "1 if the last read of this source worked.");
 
@@ -180,6 +183,27 @@ async function cloudflareBreakdown(token: string, zoneId: string): Promise<void>
   }
 }
 
+const b64url = (b: Buffer | string) => Buffer.from(b).toString("base64url");
+
+// App Store Connect wants an ES256 JWT, at most 20 minutes long, with the signature in raw r||s form.
+export function ascToken(keyId: string, issuer: string, pem: string, now = Date.now()): string {
+  const iat = Math.floor(now / 1000);
+  const head = b64url(JSON.stringify({ alg: "ES256", kid: keyId, typ: "JWT" }));
+  const body = b64url(JSON.stringify({ iss: issuer, iat, exp: iat + 600, aud: "appstoreconnect-v1" }));
+  const sig = sign("sha256", Buffer.from(`${head}.${body}`), { key: createPrivateKey(pem), dsaEncoding: "ieee-p1363" });
+  return `${head}.${body}.${b64url(sig)}`;
+}
+
+async function testflight(keyId: string, issuer: string, keyFile: string, bundleId: string): Promise<void> {
+  const headers = { authorization: `Bearer ${ascToken(keyId, issuer, readFileSync(keyFile, "utf8"))}` };
+  const api = "https://api.appstoreconnect.apple.com/v1";
+  const apps = await json<{ data: { id: string }[] }>(`${api}/apps?filter[bundleId]=${bundleId}`, { headers });
+  const app = apps.data[0]?.id;
+  if (!app) throw new Error(`testflight: no app ${bundleId}`);
+  const testers = await json<{ meta: { paging: { total: number } } }>(`${api}/betaTesters?filter[apps]=${app}&limit=1`, { headers });
+  reg.set("gryt_testflight_testers", { app: bundleId }, testers.meta.paging.total);
+}
+
 async function members(host: string): Promise<void> {
   const info = await json<{ members: string }>(`https://${host}/info`);
   reg.set("gryt_server_members", { server: host }, Number(info.members));
@@ -196,6 +220,10 @@ async function refresh(): Promise<void> {
   if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID) {
     await source("cloudflare", () => cloudflare(env.CLOUDFLARE_API_TOKEN as string, env.CLOUDFLARE_ZONE_ID as string, env.CLOUDFLARE_ZONE ?? "gryt.chat"));
     await source("cloudflare:breakdown", () => cloudflareBreakdown(env.CLOUDFLARE_API_TOKEN as string, env.CLOUDFLARE_ZONE_ID as string));
+  }
+  if (env.ASC_KEY_ID && env.ASC_ISSUER_ID && env.ASC_KEY_FILE) {
+    const { ASC_KEY_ID: id, ASC_ISSUER_ID: iss, ASC_KEY_FILE: file } = env;
+    await source("testflight", () => testflight(id, iss, file, env.ASC_BUNDLE_ID ?? "chat.gryt.app"));
   }
 }
 

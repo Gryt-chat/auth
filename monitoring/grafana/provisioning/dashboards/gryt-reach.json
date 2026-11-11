@@ -1472,7 +1472,7 @@
       "id": 201,
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 5,
         "x": 0,
         "y": 57
       },
@@ -1521,8 +1521,8 @@
       "id": 202,
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 6,
+        "w": 5,
+        "x": 5,
         "y": 57
       },
       "targets": [
@@ -1569,8 +1569,8 @@
       "id": 203,
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 5,
+        "x": 10,
         "y": 57
       },
       "targets": [
@@ -1618,13 +1618,62 @@
       "id": 204,
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 18,
+        "w": 5,
+        "x": 15,
         "y": 57
       },
       "targets": [
         {
           "expr": "sum(gryt_web_pageviews_24h_by_device)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "TestFlight testers",
+      "description": "People testing the iPhone app before it's in the App Store.",
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 250,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 57
+      },
+      "targets": [
+        {
+          "expr": "sum(gryt_testflight_testers)",
           "refId": "A"
         }
       ],

@@ -27,12 +27,17 @@ services:
     command: ["node", "/app/reach.ts"]
     volumes:
       - ./reach-exporter:/app:ro
+      # Its own folder, so the container sees the App Store Connect key and none of the SSH keys.
+      - ${GRYT_REACH_KEY_DIR:-/boot/config/gryt-reach}:/keys:ro
     environment:
       GITHUB_TOKEN: ${GRYT_REACH_GITHUB_TOKEN:-}
       DISCORD_INVITE: ${GRYT_REACH_DISCORD_INVITE:-}
       SERVERS: ${GRYT_REACH_SERVERS:-community.gryt.chat}
       CLOUDFLARE_API_TOKEN: ${GRYT_REACH_CLOUDFLARE_TOKEN:-}
       CLOUDFLARE_ZONE_ID: ${GRYT_REACH_CLOUDFLARE_ZONE_ID:-}
+      ASC_KEY_ID: ${GRYT_REACH_ASC_KEY_ID:-}
+      ASC_ISSUER_ID: ${GRYT_REACH_ASC_ISSUER_ID:-}
+      ASC_KEY_FILE: /keys/asc.p8
     networks:
       - gryt-auth-network
     restart: unless-stopped
