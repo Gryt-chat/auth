@@ -1,4 +1,4 @@
-# Monitoring for the VPS auth stack, run on Unraid (GRYT-2038). Start only metrics-tunnel, prometheus, alertmanager and grafana.
+# Monitoring for the VPS auth stack, run on Unraid (GRYT-2038). Start only metrics-tunnel, prometheus, alertmanager, grafana and reach-exporter.
 # The tunnel answers as keycloak and postgres-exporter, so prometheus.yml is the same file the VPS would use.
 services:
   metrics-tunnel:
@@ -19,4 +19,19 @@ services:
     networks:
       gryt-auth-network:
         aliases: [keycloak, postgres-exporter]
+    restart: unless-stopped
+
+  reach-exporter:
+    image: node:24-alpine
+    container_name: gryt-auth-reach-exporter
+    command: ["node", "/app/reach.ts"]
+    volumes:
+      - ./reach-exporter:/app:ro
+    environment:
+      GITHUB_TOKEN: ${GRYT_REACH_GITHUB_TOKEN:-}
+      DISCORD_INVITE: ${GRYT_REACH_DISCORD_INVITE:-}
+      CLOUDFLARE_API_TOKEN: ${GRYT_REACH_CLOUDFLARE_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${GRYT_REACH_CLOUDFLARE_ZONE_ID:-}
+    networks:
+      - gryt-auth-network
     restart: unless-stopped

@@ -22,3 +22,10 @@ scrape_configs:
       - targets:
           - postgres-exporter:9187
 
+
+  # Public download and visitor counts; the sources refresh hourly.
+  - job_name: reach
+    scrape_interval: 5m
+    static_configs:
+      - targets:
+          - reach-exporter:9800
