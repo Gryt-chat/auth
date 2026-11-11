@@ -18,6 +18,7 @@ receivers:
     email_configs:
       - to: "__GRYT_ALERT_EMAIL__"
         # The default body links to Alertmanager, which only answers on the box itself.
+        # Grafana picks the Alertmanager by data source name here, not uid.
         html: >-
           {{ range .Alerts }}<p><b>{{ .Labels.alertname }}</b> ({{ .Status }}): {{ .Annotations.summary }}</p>{{ end }}
-          <p><a href="__GRYT_MONITORING_URL__/alerting/groups?alertmanager=alertmanager">Open in Grafana</a></p>
+          <p><a href="__GRYT_MONITORING_URL__/alerting/groups?alertmanager=Alertmanager">Open in Grafana</a></p>
