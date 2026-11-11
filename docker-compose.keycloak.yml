@@ -200,6 +200,7 @@ services:
       GRYT_SMTP_USER: ${GRYT_SMTP_USER:-}
       GRYT_SMTP_PASS: ${GRYT_SMTP_PASS:-}
       GRYT_ALERT_EMAIL: ${GRYT_ALERT_EMAIL:-hello@gryt.chat}
+      GRYT_MONITORING_URL: ${GRYT_MONITORING_URL:-https://monitoring.gryt.chat}
       GRYT_ALERTMANAGER_EXTERNAL_URL: ${GRYT_ALERTMANAGER_EXTERNAL_URL:-http://localhost:${GRYT_ALERTMANAGER_PORT:-19093}}
     ports:
       - "127.0.0.1:${GRYT_ALERTMANAGER_PORT:-19093}:9093"
@@ -216,6 +217,7 @@ services:
           -e "s|__GRYT_SMTP_USER__|$$GRYT_SMTP_USER|g" \
           -e "s|__GRYT_SMTP_PASS__|$$GRYT_SMTP_PASS|g" \
           -e "s|__GRYT_ALERT_EMAIL__|$$GRYT_ALERT_EMAIL|g" \
+          -e "s|__GRYT_MONITORING_URL__|$$GRYT_MONITORING_URL|g" \
           /tmp/alertmanager.yml
         # --web.external-url or every "View in Alertmanager" link in an email
         # points at the container's own id, e.g. http://8d18958c298e:9093, which

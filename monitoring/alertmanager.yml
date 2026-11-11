@@ -17,3 +17,7 @@ receivers:
   - name: email
     email_configs:
       - to: "__GRYT_ALERT_EMAIL__"
+        # The default body links to Alertmanager, which only answers on the box itself.
+        html: >-
+          {{ range .Alerts }}<p><b>{{ .Labels.alertname }}</b> ({{ .Status }}): {{ .Annotations.summary }}</p>{{ end }}
+          <p><a href="__GRYT_MONITORING_URL__/alerting/groups?alertmanager=alertmanager">Open in Grafana</a></p>
