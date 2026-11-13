@@ -10,6 +10,12 @@ down=()
 curl -fsS -m 10 -o /dev/null https://auth.gryt.chat/realms/gryt/.well-known/openid-configuration || down+=(auth.gryt.chat)
 curl -fsS -m 10 https://id.gryt.chat/health 2>/dev/null | grep -q '"ok"' || down+=(id.gryt.chat)
 
+# A failure only counts if Unraid itself can reach the internet; a router reboot isn't an auth outage.
+if [[ ${#down[@]} -gt 0 ]] && ! curl -fsS -m 5 -o /dev/null https://www.google.com/generate_204; then
+  echo "no internet from Unraid, not counting: ${down[*]}" >&2
+  exit 0
+fi
+
 if [[ ${#down[@]} -eq 0 ]]; then
   rm -f "$STATE"
   exit 0
