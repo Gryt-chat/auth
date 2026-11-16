@@ -25,3 +25,14 @@ test("an approve ticket is signed, short-lived, its own type, and carries no key
   assert.equal(decodeProtectedHeader(ticket).typ, "gryt-approve+jwt");
   await assert.rejects(jwtVerify(ticket, key, { subject: "acct-2" }), "only for its own account");
 });
+
+test("a certificate names the account key only when one is given", async () => {
+  const { issueCertificate } = await import("../src/certificate.js");
+  const key = await importJWK(await getCAPublicJwk(), CA_ALG);
+  const user = { sub: "acct-1", preferredUsername: "kari" } as Parameters<typeof issueCertificate>[0];
+  const jwk = { kty: "EC", crv: "P-256", x: "x", y: "y" };
+  const withSeed = (await jwtVerify(await issueCertificate(user, jwk, "seed-thumb"), key)).payload;
+  assert.equal(withSeed.seed, "seed-thumb");
+  const without = (await jwtVerify(await issueCertificate(user, jwk), key)).payload;
+  assert.equal("seed" in without, false);
+});

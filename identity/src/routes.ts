@@ -69,7 +69,8 @@ app.post("/api/v1/certificate", async (c) => {
   }
 
   try {
-    const certificate = await issueCertificate(user, jwk);
+    // Only under enforce does the account have one key, so only then may a server take it on this alone.
+    const certificate = await issueCertificate(user, jwk, gateMode() === "enforce" ? seedKey : null);
     return c.json({ certificate });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
