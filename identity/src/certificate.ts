@@ -22,6 +22,8 @@ export interface CertificatePayload {
   sub: string;
   preferred_username?: string;
   jwk: JsonWebKey;
+  /** The account key's thumbprint, when this device proved it holds it. A server takes that key without a handover. */
+  seed?: string;
   iat: number;
   exp: number;
 }
@@ -29,6 +31,7 @@ export interface CertificatePayload {
 export async function issueCertificate(
   user: VerifiedUser,
   clientPublicJwk: JsonWebKey,
+  seed: string | null = null,
 ): Promise<string> {
   const privateKey = await getCAPrivateKey();
   const kid = await getCAKid();
@@ -38,6 +41,7 @@ export async function issueCertificate(
   const jwt = await new SignJWT({
     jwk: clientPublicJwk,
     preferred_username: user.preferredUsername,
+    ...(seed ? { seed } : {}),
   })
     .setProtectedHeader({ alg: CA_ALG, kid, typ: "JWT" })
     .setIssuer(getIssuer())
