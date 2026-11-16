@@ -109,10 +109,10 @@ test("each key remembers its device, and only a device on record can list them",
   assert.equal((await keys.list("dana", mac.thumb))?.length, 2, "a refused key isn't recorded");
 });
 
-test("a device name is display text: trimmed, no control characters, at most 64", () => {
-  assert.equal(deviceName("  iPhone\n"), "iPhone");
-  assert.equal(deviceName("a\u0007b"), "ab");
-  assert.equal(deviceName("x".repeat(100))?.length, 64);
-  assert.equal(deviceName(""), undefined);
+test("a device name is only taken sealed: base64url, 40 to 160 characters", () => {
+  const sealed = "AAECAwQFBgcICQoLvfh2Jmu-ALU0OE4xYdil-2nHaV7ZnHGVgv4";
+  assert.equal(deviceName(sealed), sealed);
+  assert.equal(deviceName("Kari's laptop"), undefined, "plain text is refused");
+  assert.equal(deviceName("A".repeat(161)), undefined);
   assert.equal(deviceName(42), undefined);
 });
