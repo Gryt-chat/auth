@@ -102,6 +102,14 @@ app.get("/api/v1/account-key/book/:sub", async (c) => {
   return c.json(await accountKeys.book(sub));
 });
 
+/* The one-time move to one key: the first device of a several-key account to update keeps its key. */
+app.post("/api/v1/account-key/claim", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  const result = await accountKeys.claim(who.sub, who.thumb);
+  return result === "not_yours" ? c.json({ error: "not_yours" }, 403) : c.json({ result });
+});
+
 /* For the one-time "pick the device to keep" step. Only a device already on record may look. */
 app.post("/api/v1/account-key/list", async (c) => {
   const who = await seedKeyFrom(c);

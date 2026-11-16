@@ -26,7 +26,7 @@ export function deviceName(value: unknown): string | undefined {
   return typeof value === "string" && /^[A-Za-z0-9_-]{40,160}$/.test(value) ? value : undefined;
 }
 /** One line of the key book: which key, the day it came, and how. Never rewritten. */
-export interface BookEntry { day: string; thumb: string; how: "first" | "added" | "reset" }
+export interface BookEntry { day: string; thumb: string; how: "first" | "added" | "reset" | "kept" | "retired" }
 interface AccountRecord { keys: KeyRecord[]; reset: { thumb: string; at: number } | null; book?: BookEntry[] }
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -153,6 +153,22 @@ export class AccountKeys {
     });
   }
 
+  /** One key per account: the first of an account's keys to ask keeps it, and the others are dropped. */
+  claim(sub: string, thumb: string): Promise<"kept" | "single" | "not_yours"> {
+    return this.serial(sub, async () => {
+      const rec = await this.read(sub);
+      const mine = rec.keys.find((k) => k.thumb === thumb);
+      if (!mine) return "not_yours";
+      if (rec.keys.length === 1) return "single";
+      const day = dayOf(this.now());
+      const dropped = rec.keys.filter((k) => k.thumb !== thumb);
+      rec.book = [...bookOf(rec), { day, thumb, how: "kept" }, ...dropped.map((k) => ({ day, thumb: k.thumb, how: "retired" as const }))];
+      rec.keys = [mine];
+      await this.write(sub, rec);
+      return "kept";
+    });
+  }
+
   /** The account's keys, newest use first, for a device that holds one of them. Null for anyone else. */
   async list(sub: string, thumb: string): Promise<{ thumb: string; device: string | null; firstSeen: number; lastSeen: number; current: boolean }[] | null> {
     const rec = await this.read(sub);
@@ -171,8 +187,9 @@ export class AccountKeys {
   }
 
   /** What a device with this seed key should know: whether it's on record, and any reset under way. */
-  async status(sub: string, thumb: string): Promise<{ known: boolean; resetAt: number | null; resetIsYours: boolean }> {
+  async status(sub: string, thumb: string): Promise<{ known: boolean; resetAt: number | null; resetIsYours: boolean; multi: boolean }> {
     const rec = await this.read(sub);
-    return { known: rec.keys.some((k) => k.thumb === thumb), resetAt: this.resetDueAt(rec), resetIsYours: rec.reset?.thumb === thumb };
+    const known = rec.keys.some((k) => k.thumb === thumb);
+    return { known, resetAt: this.resetDueAt(rec), resetIsYours: rec.reset?.thumb === thumb, multi: known && rec.keys.length > 1 };
   }
 }

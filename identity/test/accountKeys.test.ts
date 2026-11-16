@@ -150,3 +150,30 @@ test("an account from before the book gets one built from its keys", async () =>
   await (keys as unknown as { write(s: string, r: unknown): Promise<void> }).write("frank", rec);
   assert.deepEqual((await keys.book("frank")).book.map((e) => [e.thumb, e.how]), [[a.thumb, "first"], [b.thumb, "added"]]);
 });
+
+test("the first key to claim stays, the others go, and the book says so", async () => {
+  const mac = await seedKey();
+  const pc = await seedKey();
+  const phone = await seedKey();
+  for (const k of [mac, pc, phone]) await keys.decide("gale", k.thumb, "learn");
+  assert.equal((await keys.status("gale", pc.thumb)).multi, true);
+
+  assert.equal(await keys.claim("gale", pc.thumb), "kept");
+  assert.equal(await keys.claim("gale", mac.thumb), "not_yours", "a second claim can't win");
+  assert.deepEqual((await keys.book("gale")).keys.map((k) => k.thumb), [pc.thumb]);
+  assert.equal((await keys.status("gale", pc.thumb)).multi, false);
+  assert.deepEqual(await keys.decide("gale", mac.thumb, "enforce"), { ok: false, resetAt: null }, "a dropped key needs approving");
+  const hows = (await keys.book("gale")).book.map((e) => e.how);
+  assert.deepEqual(hows.slice(-3), ["kept", "retired", "retired"]);
+  assert.equal(await keys.claim("gale", pc.thumb), "single", "claiming again changes nothing");
+});
+
+test("two claims at once: exactly one wins", async () => {
+  const a = await seedKey();
+  const b = await seedKey();
+  await keys.decide("hana", a.thumb, "learn");
+  await keys.decide("hana", b.thumb, "learn");
+  const results = await Promise.all([keys.claim("hana", a.thumb), keys.claim("hana", b.thumb)]);
+  assert.deepEqual(results.sort(), ["kept", "not_yours"]);
+  assert.equal((await keys.book("hana")).keys.length, 1);
+});
