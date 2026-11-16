@@ -116,3 +116,37 @@ test("a device name is display text: trimmed, no control characters, at most 64"
   assert.equal(deviceName(""), undefined);
   assert.equal(deviceName(42), undefined);
 });
+
+test("the key book lists keys and changes by day, and nothing about devices", async () => {
+  const one = await seedKey();
+  const two = await seedKey();
+  await keys.decide("erin", one.thumb, "learn", "Mac");
+  clock += 2 * 24 * 60 * 60 * 1000;
+  await keys.decide("erin", two.thumb, "learn", "Phone");
+  const { keys: current, book } = await keys.book("erin");
+  assert.deepEqual(book.map((e) => [e.thumb, e.how]), [[one.thumb, "first"], [two.thumb, "added"]]);
+  assert.equal(current.length, 2);
+  assert.match(current[0].since, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!JSON.stringify(await keys.book("erin")).includes("Mac"), "no device names");
+  assert.ok(!JSON.stringify(await keys.book("erin")).includes("lastSeen"), "no last use");
+
+  const lost = await seedKey();
+  await keys.requestReset("erin", lost.thumb);
+  clock += RESET_DELAY_MS + 1;
+  assert.deepEqual(await keys.decide("erin", lost.thumb, "enforce"), { ok: true });
+  const after = await keys.book("erin");
+  assert.deepEqual(after.keys.map((k) => k.thumb), [lost.thumb]);
+  assert.deepEqual(after.book.map((e) => e.how), ["first", "added", "reset"], "a reset adds a line, it never rewrites");
+});
+
+test("an account from before the book gets one built from its keys", async () => {
+  const a = await seedKey();
+  const b = await seedKey();
+  await keys.decide("frank", a.thumb, "learn");
+  clock += 1000;
+  await keys.decide("frank", b.thumb, "learn");
+  const rec = await keys.read("frank");
+  delete (rec as { book?: unknown }).book;
+  await (keys as unknown as { write(s: string, r: unknown): Promise<void> }).write("frank", rec);
+  assert.deepEqual((await keys.book("frank")).book.map((e) => [e.thumb, e.how]), [[a.thumb, "first"], [b.thumb, "added"]]);
+});

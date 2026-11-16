@@ -95,6 +95,13 @@ app.post("/api/v1/account-key/status", async (c) => {
   return c.json(await accountKeys.status(who.sub, who.thumb));
 });
 
+/* The key book: anyone may look one account up by id. There is deliberately no way to list them. */
+app.get("/api/v1/account-key/book/:sub", async (c) => {
+  const sub = c.req.param("sub");
+  if (!/^[A-Za-z0-9._:@-]{1,128}$/.test(sub)) return c.json({ error: "invalid_account" }, 400);
+  return c.json(await accountKeys.book(sub));
+});
+
 /* For the one-time "pick the device to keep" step. Only a device already on record may look. */
 app.post("/api/v1/account-key/list", async (c) => {
   const who = await seedKeyFrom(c);
