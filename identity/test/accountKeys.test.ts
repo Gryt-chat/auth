@@ -6,7 +6,7 @@ import { after, test } from "node:test";
 
 import { calculateJwkThumbprint, exportJWK, generateKeyPair, SignJWT } from "jose";
 
-import { AccountKeys, RESET_DELAY_MS, verifyProof } from "../src/accountKeys.js";
+import { AccountKeys, deviceName, RESET_DELAY_MS, verifyProof } from "../src/accountKeys.js";
 
 const dir = mkdtempSync(join(tmpdir(), "gryt-account-keys-"));
 after(() => rmSync(dir, { recursive: true, force: true }));
@@ -89,4 +89,30 @@ test("two devices renewing at the same moment are both recorded", async () => {
   const seeds = await Promise.all([seedKey(), seedKey(), seedKey(), seedKey()]);
   await Promise.all(seeds.map((s) => keys.decide("busy", s.thumb, "learn")));
   assert.equal((await keys.read("busy")).keys.length, 4);
+});
+
+test("each key remembers its device, and only a device on record can list them", async () => {
+  const mac = await seedKey();
+  const win = await seedKey();
+  const stranger = await seedKey();
+  assert.deepEqual(await keys.decide("dana", mac.thumb, "learn", "Mac"), { ok: true });
+  clock += 1000;
+  assert.deepEqual(await keys.decide("dana", win.thumb, "learn", "Windows PC"), { ok: true });
+  clock += 1000;
+  await keys.decide("dana", mac.thumb, "enforce", "MacBook Air");
+
+  const listed = await keys.list("dana", win.thumb);
+  assert.deepEqual(listed?.map((k) => [k.device, k.current]), [["MacBook Air", false], ["Windows PC", true]]);
+  assert.equal(await keys.list("dana", stranger.thumb), null, "a key that isn't on record learns nothing");
+
+  assert.deepEqual(await keys.decide("dana", stranger.thumb, "enforce", "Thief"), { ok: false, resetAt: null });
+  assert.equal((await keys.list("dana", mac.thumb))?.length, 2, "a refused key isn't recorded");
+});
+
+test("a device name is display text: trimmed, no control characters, at most 64", () => {
+  assert.equal(deviceName("  iPhone\n"), "iPhone");
+  assert.equal(deviceName("a\u0007b"), "ab");
+  assert.equal(deviceName("x".repeat(100))?.length, 64);
+  assert.equal(deviceName(""), undefined);
+  assert.equal(deviceName(42), undefined);
 });

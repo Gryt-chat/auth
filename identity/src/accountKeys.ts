@@ -19,7 +19,14 @@ export function gateModeFromEnv(value: string | undefined): GateMode {
 export const RESET_DELAY_MS = 30 * 24 * 60 * 60 * 1000;
 const PROOF_MAX_AGE_S = 5 * 60;
 
-interface KeyRecord { thumb: string; firstSeen: number; lastSeen: number }
+interface KeyRecord { thumb: string; firstSeen: number; lastSeen: number; device?: string }
+
+/** A device's own name for itself, as its app sends it. Never trusted for anything but display. */
+export function deviceName(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const name = value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64);
+  return name || undefined;
+}
 interface AccountRecord { keys: KeyRecord[]; reset: { thumb: string; at: number } | null }
 
 /** The seed key's thumbprint, once the proof is checked against this account and this certificate key. */
@@ -80,22 +87,23 @@ export class AccountKeys {
   }
 
   /** Whether this seed key may get a certificate, recording it as it goes. */
-  async decide(sub: string, thumb: string | null, mode: GateMode): Promise<CertDecision> {
+  async decide(sub: string, thumb: string | null, mode: GateMode, device?: string): Promise<CertDecision> {
     if (mode === "off") return { ok: true };
-    return this.serial(sub, () => this.decideNow(sub, thumb, mode));
+    return this.serial(sub, () => this.decideNow(sub, thumb, mode, device));
   }
 
-  private async decideNow(sub: string, thumb: string | null, mode: Exclude<GateMode, "off">): Promise<CertDecision> {
+  private async decideNow(sub: string, thumb: string | null, mode: Exclude<GateMode, "off">, device?: string): Promise<CertDecision> {
     const rec = await this.read(sub);
     const now = this.now();
     const known = thumb ? rec.keys.find((k) => k.thumb === thumb) : undefined;
     if (known) {
       known.lastSeen = now;
+      if (device) known.device = device;
       await this.write(sub, rec);
       return { ok: true };
     }
     if (thumb && (mode === "learn" || rec.keys.length === 0)) {
-      rec.keys.push({ thumb, firstSeen: now, lastSeen: now });
+      rec.keys.push(device ? { thumb, firstSeen: now, lastSeen: now, device } : { thumb, firstSeen: now, lastSeen: now });
       await this.write(sub, rec);
       return { ok: true };
     }
@@ -132,6 +140,15 @@ export class AccountKeys {
       }
       return true;
     });
+  }
+
+  /** The account's keys, newest use first, for a device that holds one of them. Null for anyone else. */
+  async list(sub: string, thumb: string): Promise<{ thumb: string; device: string | null; firstSeen: number; lastSeen: number; current: boolean }[] | null> {
+    const rec = await this.read(sub);
+    if (!rec.keys.some((k) => k.thumb === thumb)) return null;
+    return [...rec.keys]
+      .sort((a, b) => b.lastSeen - a.lastSeen)
+      .map((k) => ({ thumb: k.thumb, device: k.device ?? null, firstSeen: k.firstSeen, lastSeen: k.lastSeen, current: k.thumb === thumb }));
   }
 
   /** What a device with this seed key should know: whether it's on record, and any reset under way. */
