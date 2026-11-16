@@ -27,7 +27,19 @@ export function deviceName(value: unknown): string | undefined {
   const name = value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64);
   return name || undefined;
 }
-interface AccountRecord { keys: KeyRecord[]; reset: { thumb: string; at: number } | null }
+/** One line of the key book: which key, the day it came, and how. Never rewritten. */
+export interface BookEntry { day: string; thumb: string; how: "first" | "added" | "reset" }
+interface AccountRecord { keys: KeyRecord[]; reset: { thumb: string; at: number } | null; book?: BookEntry[] }
+
+const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/* Records from before the book have only their keys: the book starts from those. */
+function bookOf(rec: AccountRecord): BookEntry[] {
+  if (rec.book) return rec.book;
+  return [...rec.keys]
+    .sort((a, b) => a.firstSeen - b.firstSeen)
+    .map((k, i) => ({ day: dayOf(k.firstSeen), thumb: k.thumb, how: i === 0 ? "first" : "added" }));
+}
 
 /** The seed key's thumbprint, once the proof is checked against this account and this certificate key. */
 export async function verifyProof(proof: unknown, sub: string, certJwk: JWK, nowS = Math.floor(Date.now() / 1000)): Promise<string | null> {
@@ -103,6 +115,7 @@ export class AccountKeys {
       return { ok: true };
     }
     if (thumb && (mode === "learn" || rec.keys.length === 0)) {
+      rec.book = [...bookOf(rec), { day: dayOf(now), thumb, how: rec.keys.length === 0 ? "first" : "added" }];
       rec.keys.push(device ? { thumb, firstSeen: now, lastSeen: now, device } : { thumb, firstSeen: now, lastSeen: now });
       await this.write(sub, rec);
       return { ok: true };
@@ -110,7 +123,7 @@ export class AccountKeys {
     if (mode === "learn") return { ok: true };
     const due = this.resetDueAt(rec);
     if (thumb && rec.reset?.thumb === thumb && due !== null && due <= now) {
-      await this.write(sub, { keys: [{ thumb, firstSeen: now, lastSeen: now }], reset: null });
+      await this.write(sub, { keys: [{ thumb, firstSeen: now, lastSeen: now }], reset: null, book: [...bookOf(rec), { day: dayOf(now), thumb, how: "reset" }] });
       return { ok: true };
     }
     return { ok: false, resetAt: rec.reset?.thumb === thumb ? due : null };
@@ -149,6 +162,14 @@ export class AccountKeys {
     return [...rec.keys]
       .sort((a, b) => b.lastSeen - a.lastSeen)
       .map((k) => ({ thumb: k.thumb, device: k.device ?? null, firstSeen: k.firstSeen, lastSeen: k.lastSeen, current: k.thumb === thumb }));
+  }
+
+  /** Public: the account's current keys and every change, by day. No device names or last use. */
+  async book(sub: string): Promise<{ keys: { thumb: string; since: string }[]; book: BookEntry[] }> {
+    const rec = await this.read(sub);
+    const book = bookOf(rec);
+    const since = (t: string) => [...book].reverse().find((e) => e.thumb === t)?.day ?? "";
+    return { keys: rec.keys.map((k) => ({ thumb: k.thumb, since: since(k.thumb) })), book };
   }
 
   /** What a device with this seed key should know: whether it's on record, and any reset under way. */
