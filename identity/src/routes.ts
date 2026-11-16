@@ -6,7 +6,7 @@ import { cors } from "hono/cors";
 import { getCAPublicJwk } from "./keys.js";
 import { verifyKeycloakToken } from "./keycloak.js";
 import { issueCertificate } from "./certificate.js";
-import { AccountKeys, gateModeFromEnv, verifyProof } from "./accountKeys.js";
+import { AccountKeys, deviceName, gateModeFromEnv, verifyProof } from "./accountKeys.js";
 import { Relay } from "./pairing/relay.js";
 import { pairingRoutes, trustedProxies } from "./pairing/routes.js";
 
@@ -41,7 +41,7 @@ app.post("/api/v1/certificate", async (c) => {
     return c.json({ error: "invalid_token", message: `Keycloak token validation failed: ${msg}` }, 401);
   }
 
-  let body: { jwk?: JsonWebKey; proof?: string };
+  let body: { jwk?: JsonWebKey; proof?: string; device?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -61,7 +61,7 @@ app.post("/api/v1/certificate", async (c) => {
   }
 
   const seedKey = await verifyProof(body.proof, user.sub, jwk as Record<string, string>);
-  const decision = await accountKeys.decide(user.sub, seedKey, gateMode());
+  const decision = await accountKeys.decide(user.sub, seedKey, gateMode(), deviceName(body.device));
   if (!decision.ok) {
     return c.json({ error: "approval_required", message: "Link this device from one that's already signed in, or use your 24 words.", resetAt: decision.resetAt }, 403);
   }
@@ -81,18 +81,26 @@ async function seedKeyFrom(c: { req: { header: (n: string) => string | undefined
   const auth = c.req.header("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   const user = await verifyKeycloakToken(auth.slice(7)).catch(() => null);
-  const body = (await c.req.json().catch(() => null)) as { jwk?: Record<string, string>; proof?: string } | null;
+  const body = (await c.req.json().catch(() => null)) as { jwk?: Record<string, string>; proof?: string; device?: unknown } | null;
   if (!user || !body?.jwk) return null;
   const thumb = await verifyProof(body.proof, user.sub, body.jwk);
-  return thumb ? { sub: user.sub, thumb } : null;
+  return thumb ? { sub: user.sub, thumb, device: deviceName(body.device) } : null;
 }
 
 app.post("/api/v1/account-key/status", async (c) => {
   const who = await seedKeyFrom(c);
   if (!who) return c.json({ error: "invalid_proof" }, 401);
   // Both apps ask on every sign-in, so learn mode fills in days rather than at the next certificate renewal.
-  await accountKeys.decide(who.sub, who.thumb, gateMode());
+  await accountKeys.decide(who.sub, who.thumb, gateMode(), who.device);
   return c.json(await accountKeys.status(who.sub, who.thumb));
+});
+
+/* For the one-time "pick the device to keep" step. Only a device already on record may look. */
+app.post("/api/v1/account-key/list", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  const keys = await accountKeys.list(who.sub, who.thumb);
+  return keys ? c.json({ keys }) : c.json({ error: "not_yours" }, 403);
 });
 
 app.post("/api/v1/account-key/reset", async (c) => {
