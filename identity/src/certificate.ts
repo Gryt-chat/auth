@@ -48,3 +48,20 @@ export async function issueCertificate(
 
   return jwt;
 }
+
+/** Ticket lifetime: long enough to reach your other devices, short enough that a replay is stale. */
+export const APPROVE_TICKET_SECONDS = 600;
+
+/* Proves to your other devices that this account really has a device waiting, so a server can't fake one.
+   Its own typ and no jwk claim, so it can never pass as a certificate. */
+export async function issueApproveTicket(sub: string, deviceType: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  return new SignJWT({ purpose: "approve-ask", deviceType })
+    .setProtectedHeader({ alg: CA_ALG, kid: await getCAKid(), typ: "gryt-approve+jwt" })
+    .setIssuer(getIssuer())
+    .setSubject(sub)
+    .setIssuedAt(now)
+    .setExpirationTime(now + APPROVE_TICKET_SECONDS)
+    .setJti(crypto.randomUUID())
+    .sign(await getCAPrivateKey());
+}

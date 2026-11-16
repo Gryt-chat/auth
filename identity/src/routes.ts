@@ -5,7 +5,7 @@ import { cors } from "hono/cors";
 
 import { getCAPublicJwk } from "./keys.js";
 import { verifyKeycloakToken } from "./keycloak.js";
-import { issueCertificate } from "./certificate.js";
+import { issueApproveTicket, issueCertificate } from "./certificate.js";
 import { AccountKeys, deviceName, gateModeFromEnv, verifyProof } from "./accountKeys.js";
 import { Relay } from "./pairing/relay.js";
 import { pairingRoutes, trustedProxies } from "./pairing/routes.js";
@@ -41,7 +41,7 @@ app.post("/api/v1/certificate", async (c) => {
     return c.json({ error: "invalid_token", message: `Keycloak token validation failed: ${msg}` }, 401);
   }
 
-  let body: { jwk?: JsonWebKey; proof?: string; device?: unknown };
+  let body: { jwk?: JsonWebKey; proof?: string; device?: unknown; deviceType?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -63,7 +63,9 @@ app.post("/api/v1/certificate", async (c) => {
   const seedKey = await verifyProof(body.proof, user.sub, jwk as Record<string, string>);
   const decision = await accountKeys.decide(user.sub, seedKey, gateMode(), deviceName(body.device));
   if (!decision.ok) {
-    return c.json({ error: "approval_required", message: "Link this device from one that's already signed in, or use your 24 words.", resetAt: decision.resetAt }, 403);
+    const deviceType = typeof body.deviceType === "string" ? body.deviceType.replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 32) : "";
+    const ticket = await issueApproveTicket(user.sub, deviceType);
+    return c.json({ error: "approval_required", message: "Link this device from one that's already signed in, or use your 24 words.", resetAt: decision.resetAt, ticket }, 403);
   }
 
   try {
@@ -100,6 +102,14 @@ app.get("/api/v1/account-key/book/:sub", async (c) => {
   const sub = c.req.param("sub");
   if (!/^[A-Za-z0-9._:@-]{1,128}$/.test(sub)) return c.json({ error: "invalid_account" }, 400);
   return c.json(await accountKeys.book(sub));
+});
+
+/* The one-time move to one key: the first device of a several-key account to update keeps its key. */
+app.post("/api/v1/account-key/claim", async (c) => {
+  const who = await seedKeyFrom(c);
+  if (!who) return c.json({ error: "invalid_proof" }, 401);
+  const result = await accountKeys.claim(who.sub, who.thumb);
+  return result === "not_yours" ? c.json({ error: "not_yours" }, 403) : c.json({ result });
 });
 
 /* For the one-time "pick the device to keep" step. Only a device already on record may look. */
