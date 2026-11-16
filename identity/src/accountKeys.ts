@@ -21,11 +21,9 @@ const PROOF_MAX_AGE_S = 5 * 60;
 
 interface KeyRecord { thumb: string; firstSeen: number; lastSeen: number; device?: string }
 
-/** A device's own name for itself, as its app sends it. Never trusted for anything but display. */
+/** A device's name, sealed by the app with its seed (sealDeviceName). Stored as is: this service can't read it. */
 export function deviceName(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const name = value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64);
-  return name || undefined;
+  return typeof value === "string" && /^[A-Za-z0-9_-]{40,160}$/.test(value) ? value : undefined;
 }
 /** One line of the key book: which key, the day it came, and how. Never rewritten. */
 export interface BookEntry { day: string; thumb: string; how: "first" | "added" | "reset" }
