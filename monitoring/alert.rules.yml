@@ -1,8 +1,10 @@
 groups:
   - name: auth
     rules:
+      # Both targets down at once is the scrape path (the Unraid tunnel), not auth.
+      # AuthUnreachableFromOutside is what says sign-in is down.
       - alert: KeycloakInstanceDown
-        expr: up{job="keycloak"} == 0
+        expr: up{job="keycloak"} == 0 unless on() up{job="postgres"} == 0
         for: 2m
         labels:
           severity: page
@@ -11,13 +13,22 @@ groups:
           description: "Prometheus cannot scrape {{ $labels.instance }} for 2 minutes."
 
       - alert: PostgresExporterDown
-        expr: up{job="postgres"} == 0
+        expr: up{job="postgres"} == 0 unless on() up{job="keycloak"} == 0
         for: 2m
         labels:
           severity: page
         annotations:
           summary: "Postgres exporter down"
           description: "Prometheus cannot scrape postgres-exporter for 2 minutes."
+
+      - alert: MetricsTunnelDown
+        expr: up{job="keycloak"} == 0 and on() up{job="postgres"} == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "No auth metrics for an hour"
+          description: "Prometheus can reach neither Keycloak nor postgres-exporter, so the scrape path is down. Auth alerts are blind until it's back."
 
       # Nothing watched failed sign-ins until GRYT-1080. Thresholds are set against how quiet
       # this realm is — around 144 failed logins over its whole life.
