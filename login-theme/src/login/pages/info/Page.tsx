@@ -3,6 +3,7 @@
  * --revert` restores it. The link order is the original's: pageRedirectUri, then actionUri.
  */
 
+import { CheckIcon, InfoIcon } from "@phosphor-icons/react";
 import { Button } from "@gryt/ui";
 import { kcSanitize } from "@keycloakify/login-ui/kcSanitize";
 import { assert } from "tsafe/assert";
@@ -29,6 +30,14 @@ export function Page() {
     return (
         <Template
             displayMessage={false}
+            iconTone={kcContext.message.type === "success" ? "success" : "info"}
+            iconNode={
+                kcContext.message.type === "success" ? (
+                    <CheckIcon size={24} weight="bold" />
+                ) : (
+                    <InfoIcon size={24} weight="fill" />
+                )
+            }
             headerNode={
                 <span
                     dangerouslySetInnerHTML={{
@@ -67,7 +76,7 @@ export function Page() {
 
                 {onward !== null && (
                     <div className="gryt-auth-actions">
-                        <Button render={<a href={onward.href} />} tone="neutral" size="large">
+                        <Button render={<a href={onward.href} />} nativeButton={false} size="large">
                             {onward.label}
                         </Button>
                     </div>

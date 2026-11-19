@@ -3,6 +3,7 @@
  * --revert` restores it. The message stays sanitised HTML, because it can carry markup.
  */
 
+import { WarningIcon } from "@phosphor-icons/react";
 import { Button } from "@gryt/ui";
 import { kcSanitize } from "@keycloakify/login-ui/kcSanitize";
 import { assert } from "tsafe/assert";
@@ -18,7 +19,12 @@ export function Page() {
     const backUrl = kcContext.client?.baseUrl;
 
     return (
-        <Template displayMessage={false} headerNode={msgStr("errorTitle")}>
+        <Template
+            displayMessage={false}
+            headerNode={msgStr("errorTitle")}
+            iconTone="danger"
+            iconNode={<WarningIcon size={24} weight="fill" />}
+        >
             <div id="kc-error-message" className="gryt-auth-form">
                 <p
                     className="gryt-auth-prose"
@@ -29,7 +35,7 @@ export function Page() {
                     <div className="gryt-auth-actions">
                         <Button
                             render={<a id="backToApplication" href={backUrl} />}
-                            tone="neutral"
+                            nativeButton={false}
                             size="large"
                         >
                             {msg("backToApplication")}

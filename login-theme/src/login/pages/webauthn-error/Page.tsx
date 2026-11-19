@@ -17,7 +17,11 @@ export function Page() {
     const { msg, msgStr } = useI18n();
 
     return (
-        <Template displayMessage headerNode={msgStr("webauthn-error-title")}>
+        <Template
+            displayMessage
+            headerNode={msgStr("webauthn-error-title")}
+            subtitleNode={msgStr("grytPasskeyErrorSub")}
+        >
             <div className="gryt-auth-form">
                 <form
                     id="kc-error-credential-form"
