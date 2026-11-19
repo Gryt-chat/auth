@@ -55,8 +55,8 @@ if [ "${code}" = "404" ]; then
   exit 0
 fi
 
-# Creates or updates one provider from /tmp/<alias>.json, then reads it back.
-# A provider that silently trusts every email is the failure that matters here.
+# Creates or updates one provider from /tmp/<alias>.json, then reads it back
+# to check trustEmail and enabled actually stuck.
 apply_provider() {
   alias="$1"
   exists=$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${token}" "${base}/identity-provider/instances/${alias}")
@@ -81,9 +81,9 @@ apply_provider() {
   esac
   current=$(curl -sS -H "Authorization: Bearer ${token}" "${base}/identity-provider/instances/${alias}" | tr -d ' \n\t')
   case "${current}" in
-    *'"trustEmail":false'*) ;;
+    *'"trustEmail":true'*) ;;
     *)
-      log "ERROR: ${alias} came back without trustEmail=false."
+      log "ERROR: ${alias} came back without trustEmail=true."
       exit 1
       ;;
   esac
@@ -97,8 +97,8 @@ apply_provider() {
   log "Sign in with ${alias} is on."
 }
 
-# trustEmail off, so a Google or Apple address still gets Gryt's own verification mail. The default first-login
-# flow never links an existing account on email alone: it asks for that account's password or a mail link.
+# trustEmail on: Keycloak copies the provider's email_verified, so an address Google or Apple verified skips our mail.
+# Linking to an existing account still needs that account's password or a mail link; trustEmail doesn't skip that.
 if [ -n "${GOOGLE_ID}" ]; then
   cat > /tmp/google.json <<JSON
 {
@@ -106,7 +106,7 @@ if [ -n "${GOOGLE_ID}" ]; then
   "providerId": "google",
   "displayName": "Google",
   "enabled": true,
-  "trustEmail": false,
+  "trustEmail": true,
   "storeToken": false,
   "linkOnly": false,
   "firstBrokerLoginFlowAlias": "first broker login",
@@ -131,7 +131,7 @@ if [ -n "${APPLE_ID}" ]; then
   "providerId": "apple",
   "displayName": "Apple",
   "enabled": true,
-  "trustEmail": false,
+  "trustEmail": true,
   "storeToken": false,
   "linkOnly": false,
   "firstBrokerLoginFlowAlias": "first broker login",
