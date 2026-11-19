@@ -58,7 +58,7 @@ const { I18nProvider, useI18n } = i18nBuilder
             "webauthn-error-title": "That didn't go through",
             grytPasskeyErrorSub: "This happens if you close the prompt or wait too long. Your account is fine.",
             deleteAccountConfirm: "Delete your Gryt account?",
-            grytDeleteSub: "This removes your account and your sign-in. You can't undo it.",
+            grytDeleteSub: "This removes your account and your sign-in. Messages you sent stay on the servers you joined. You can't undo it.",
             doConfirmDelete: "Delete my account",
             grytKeepAccount: "Keep my account",
             loginChooseAuthenticator: "Choose how to sign in",
