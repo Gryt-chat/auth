@@ -854,3 +854,9 @@
   position: relative;
   z-index: 1;
 }
+
+.gryt-auth-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

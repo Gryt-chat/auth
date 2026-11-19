@@ -45,7 +45,7 @@ Starts a local Keycloak instance via Docker Compose — completely separate from
 
 ## Bootstrap
 
-Five one-shot containers run around the Keycloak server, in this order. All of them
+Six one-shot containers run around the Keycloak server, in this order. All of them
 exit immediately and are safe to re-run.
 
 | Service | What it does |
@@ -55,6 +55,7 @@ exit immediately and are safe to re-run.
 | `keycloak-bootstrap-admin` | Creates the master-realm admin if there isn't one. |
 | `keycloak-user-profile` | Applies `bootstrap/gryt-user-profile.json` through the admin API, once the server is up. |
 | `keycloak-security-policy` | Turns on brute-force protection and a password policy, through the admin API. |
+| `keycloak-identity-providers` | Turns on Sign in with Google when `GRYT_GOOGLE_CLIENT_ID` and `GRYT_GOOGLE_CLIENT_SECRET` are set. Does nothing without them. |
 
 Two things about this are worth knowing before you change any of it.
 
