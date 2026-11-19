@@ -425,6 +425,26 @@ services:
       - gryt-auth-network
     restart: "no"
 
+  keycloak-identity-providers:
+    image: curlimages/curl:8.11.1
+    container_name: gryt-auth-keycloak-identity-providers
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KC_URL: http://keycloak:8080
+      GRYT_REALM: ${GRYT_REALM:-gryt}
+      GRYT_KEYCLOAK_ADMIN_USERNAME: ${GRYT_KEYCLOAK_ADMIN_USERNAME:-admin}
+      GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
+      GRYT_GOOGLE_CLIENT_ID: ${GRYT_GOOGLE_CLIENT_ID:-}
+      GRYT_GOOGLE_CLIENT_SECRET: ${GRYT_GOOGLE_CLIENT_SECRET:-}
+    entrypoint: ["sh", "/bootstrap/apply_identity_providers.sh"]
+    volumes:
+      - ./bootstrap/apply_identity_providers.sh:/bootstrap/apply_identity_providers.sh:ro
+    networks:
+      - gryt-auth-network
+    restart: "no"
+
   # Turns on the device grant for gryt-web, for linking a device. The profile keeps `up` from
   # running it; run it by name with --no-deps. See "Turning on device linking" in the README.
   keycloak-device-grant:

@@ -9,8 +9,8 @@ import { KcPage } from "./kc.gen";
 import { getKcContextMock } from "./login/mocks/getKcContextMock";
 
 /**
- * The pages Gryt can actually reach, first, then the rest. The realm has no identity
- * providers, no consent, no SAML and no device flow, and offers passwordless webauthn.
+ * The pages Gryt can actually reach, first, then the rest. The realm has Google and Apple as its
+ * identity providers, no consent, no SAML and no device flow, and offers passwordless webauthn.
  */
 const REACHABLE = [
   "login.ftl",
@@ -65,6 +65,9 @@ function Dev() {
     if (realRealm) {
       const realm = ctx.realm as Record<string, unknown> | undefined;
       if (realm) realm.registrationEmailAsUsername = true;
+      if (ctx.social) {
+        ctx.social = { displayInfo: true, providers: [{ alias: "google", providerId: "google", displayName: "Google", loginUrl: "#", iconClasses: "" }, { alias: "apple", providerId: "apple", displayName: "Apple", loginUrl: "#", iconClasses: "" }] };
+      }
       // attributesByName, not attributes — the mock keys them by name and
       // userProfileApi reads Object.values() off that.
       const profile = ctx.profile as
