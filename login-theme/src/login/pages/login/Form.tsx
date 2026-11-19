@@ -9,6 +9,7 @@ import { useState } from "react";
 import { assert } from "tsafe/assert";
 import { useI18n } from "../../i18n";
 import { useKcContext } from "../../KcContext";
+import { PasswordWrapper } from "../../components/PasswordWrapper";
 import { useScript } from "./useScript";
 
 export function Form() {
@@ -79,14 +80,16 @@ export function Form() {
                 )}
 
                 <div>
-                    <TextField
-                        id="password"
-                        name="password"
-                        type="password"
-                        label={msgStr("password")}
-                        autoComplete="current-password"
-                        aria-invalid={hasCredentialError}
-                    />
+                    <PasswordWrapper passwordInputId="password">
+                        <TextField
+                            id="password"
+                            name="password"
+                            type="password"
+                            label={msgStr("password")}
+                            autoComplete="current-password"
+                            aria-invalid={hasCredentialError}
+                        />
+                    </PasswordWrapper>
                     {kcContext.usernameHidden && credentialError}
                 </div>
 

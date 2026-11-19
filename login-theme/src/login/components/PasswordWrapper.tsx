@@ -1,12 +1,10 @@
 /**
  * Owned from @keycloakify/login-ui 250004.7.2 — `npx keycloakify own --path <this file>
- * --revert` restores it. Phosphor, not Font Awesome: PatternFly's icon font is gone.
+ * --revert` restores it. A "Show" pill inside the field, as in the draft.
  */
 
-import { IconButton } from "@gryt/ui";
-import { Eye, EyeSlash } from "@phosphor-icons/react";
-import { useIsPasswordRevealed } from "@keycloakify/login-ui/tools/useIsPasswordRevealed";
 import type { JSX } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "../i18n";
 
 export function PasswordWrapper(props: {
@@ -17,22 +15,29 @@ export function PasswordWrapper(props: {
 
   const { msgStr } = useI18n();
 
-  const { isPasswordRevealed, toggleIsPasswordRevealed } =
-    useIsPasswordRevealed({ passwordInputId });
+  const [isPasswordRevealed, setRevealed] = useState(false);
+  const toggleIsPasswordRevealed = () => setRevealed((r) => !r);
+
+  // Keycloakify's own hook asserts the input exists on first run, which StrictMode's remount breaks.
+  useEffect(() => {
+    const input = document.getElementById(passwordInputId);
+    if (input instanceof HTMLInputElement) input.type = isPasswordRevealed ? "text" : "password";
+  });
 
   return (
     <div className="gryt-auth-password">
       {children}
-      <IconButton
+      <button
         type="button"
-        size="small"
         className="gryt-auth-reveal"
         aria-label={msgStr(isPasswordRevealed ? "hidePassword" : "showPassword")}
         aria-controls={passwordInputId}
+        aria-pressed={isPasswordRevealed}
+        onMouseDown={(e) => e.preventDefault()}
         onClick={toggleIsPasswordRevealed}
       >
-        {isPasswordRevealed ? <EyeSlash size={18} /> : <Eye size={18} />}
-      </IconButton>
+        {msgStr(isPasswordRevealed ? "grytHide" : "grytShow")}
+      </button>
     </div>
   );
 }

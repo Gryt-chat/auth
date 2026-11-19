@@ -228,6 +228,12 @@ export function Template(props: {
                   rather than sitting on the page waiting for content. */}
                 {(showTryAnotherWay || socialProvidersNode !== null) && (
                   <div className="gryt-auth-alternatives">
+                    <div className="gryt-auth-or" aria-hidden>
+                      {msgStr("grytOr")}
+                    </div>
+
+                    {socialProvidersNode}
+
                     {showTryAnotherWay && (
                       <form
                         id="kc-select-try-another-way-form"
@@ -243,15 +249,14 @@ export function Template(props: {
                           name="tryAnotherWay"
                           value="on"
                           id="try-another-way"
-                          tone="neutral"
+                          tone="ghost"
                           size="large"
+                          className="gryt-auth-quiet"
                         >
                           {msgStr("doTryAnotherWay")}
                         </Button>
                       </form>
                     )}
-
-                    {socialProvidersNode}
                   </div>
                 )}
               </div>
