@@ -3,11 +3,19 @@
  * --revert` restores it. Keycloak posts `authenticationExecution`; the value decides.
  */
 
-import { CaretRightIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, DeviceMobileIcon, FingerprintIcon, KeyIcon, PasswordIcon } from "@phosphor-icons/react";
+import { Button } from "@gryt/ui";
 import { assert } from "tsafe/assert";
 import { useKcContext } from "../../KcContext";
 import { useI18n } from "../../i18n";
 import { Template } from "../../components/Template";
+
+function iconFor(displayName: string) {
+    if (displayName.includes("otp")) return <DeviceMobileIcon size={20} weight="fill" />;
+    if (displayName.includes("webauthn")) return <FingerprintIcon size={20} weight="fill" />;
+    if (displayName.includes("recovery")) return <KeyIcon size={20} weight="fill" />;
+    return <PasswordIcon size={20} weight="fill" />;
+}
 
 export function Page() {
     const { kcContext } = useKcContext();
@@ -33,6 +41,9 @@ export function Page() {
                                 name="authenticationExecution"
                                 value={authenticationSelection.authExecId}
                             >
+                                <span className="gryt-auth-option-icon" aria-hidden>
+                                    {iconFor(authenticationSelection.displayName)}
+                                </span>
                                 <span className="gryt-auth-option-text">
                                     <span className="gryt-auth-option-name">
                                         {advancedMsg(authenticationSelection.displayName)}
@@ -52,6 +63,9 @@ export function Page() {
                         </li>
                     ))}
                 </ul>
+                <Button render={<a href={url.loginRestartFlowUrl} />} nativeButton={false} tone="ghost" size="large" className="gryt-auth-quiet">
+                    {msg("backToLogin")}
+                </Button>
             </form>
         </Template>
     );

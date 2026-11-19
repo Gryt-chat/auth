@@ -14,6 +14,8 @@
 # login/pages/login/Page.tsx
 # login/pages/login/SocialProviders.tsx
 # login/pages/login-config-totp/Page.tsx
+# login/pages/login-idp-link-confirm/Page.tsx
+# login/pages/login-idp-link-email/Page.tsx
 # login/pages/login-otp/Page.tsx
 # login/pages/login-page-expired/Page.tsx
 # login/pages/login-recovery-authn-code-config/Page.tsx
@@ -67,11 +69,9 @@
 /login/pages/login/useScript.tsx
 /login/pages/login-config-totp/index.ts
 /login/pages/login-idp-link-confirm/index.ts
-/login/pages/login-idp-link-confirm/Page.tsx
 /login/pages/login-idp-link-confirm-override/index.ts
 /login/pages/login-idp-link-confirm-override/Page.tsx
 /login/pages/login-idp-link-email/index.ts
-/login/pages/login-idp-link-email/Page.tsx
 /login/pages/login-oauth-grant/index.ts
 /login/pages/login-oauth-grant/Page.tsx
 /login/pages/login-oauth2-device-verify-user-code/index.ts

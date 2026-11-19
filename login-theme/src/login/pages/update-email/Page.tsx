@@ -24,7 +24,6 @@ export function Page() {
     return (
         <Template
             displayMessage={messagesPerField.exists("global")}
-            displayRequiredFields
             headerNode={msg("updateEmailTitle")}
         >
             <form
@@ -38,16 +37,17 @@ export function Page() {
                 <LogoutOtherSessions />
 
                 <div id="kc-form-buttons" className="gryt-auth-actions">
-                    <Button type="submit" size="large" disabled={!isFormSubmittable}>
-                        {msgStr("doSubmit")}
+                    <Button type="submit" size="large">
+                        {msgStr("grytSendConfirmation")}
                     </Button>
                     {isAppInitiatedAction && (
                         <Button
                             type="submit"
                             name="cancel-aia"
                             value="true"
-                            tone="neutral"
+                            tone="ghost"
                             size="large"
+                            className="gryt-auth-quiet"
                         >
                             {msg("doCancel")}
                         </Button>
