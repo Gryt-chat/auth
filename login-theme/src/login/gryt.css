@@ -28,6 +28,22 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("./assets/fonts/AtkinsonHyperlegibleNextVF-Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Form controls don't inherit the font by default, so inputs fell back to Arial. */
+.gryt-auth-body input,
+.gryt-auth-body button,
+.gryt-auth-body select,
+.gryt-auth-body textarea {
+  font-family: inherit;
+}
+
 .gryt-auth-body {
   margin: 0;
   min-height: 100dvh;
@@ -37,7 +53,7 @@
   padding: 1.5rem;
   background: var(--gryt-bg);
   color: var(--gryt-text);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The split lives on its own element, not on <body>.
@@ -47,7 +63,7 @@
  * happened the first time. */
 .gryt-auth-layout {
   width: 100%;
-  max-width: 48rem;
+  max-width: 50rem;
   /* Bounded, not full-height. Tall pages (register has five fields) scroll
      inside the right column rather than stretching the card down the screen. */
   max-height: min(92dvh, 40rem);
@@ -63,7 +79,7 @@
      its bottom 245px with no scrollbar to reach it. */
   grid-template-rows: minmax(0, 1fr);
   border: 1px solid var(--gryt-border);
-  border-radius: var(--gryt-radius-xl);
+  border-radius: 1.25rem;
   overflow: hidden;
   background: var(--gryt-surface);
 }
@@ -73,26 +89,105 @@
 .gryt-auth-brand {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 3rem;
-  padding: 2.5rem;
+  gap: 1.75rem;
+  padding: 2.5rem 2.25rem;
   background: var(--gryt-surface-raised);
   border-right: 1px solid var(--gryt-border);
 }
 
+.gryt-auth-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gryt-auth-mark-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .gryt-auth-wordmark {
-  font-size: 1.1875rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--gryt-text);
+}
+
+/* The pitch says this on desktop; the phone drops the pitch and keeps this line. */
+.gryt-auth-tagline {
+  display: none;
+  font-size: 0.875rem;
+  color: var(--gryt-muted);
+}
+
+.gryt-auth-owl {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2e2d5f;
+}
+
+.gryt-auth-owl-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gryt-auth-owl-body,
+.gryt-auth-owl-eyes {
+  transition: transform 450ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+.gryt-auth-owl-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gryt-owl-blink 6s infinite;
+}
+
+.gryt-auth-owl-art.is-looking .gryt-auth-owl-eyes {
+  animation: gryt-owl-look 1.9s ease-in-out;
+}
+
+.gryt-auth-owl-art.is-watch .gryt-auth-owl-eyes {
+  transform: translate(-10px, 24px);
+}
+
+/* Sinks into the circle for a password, and lifts its eyes back over the rim when it's shown. */
+.gryt-auth-owl-art.is-hide .gryt-auth-owl-body {
+  transform: translateY(470px);
+}
+
+.gryt-auth-owl-art.is-peek .gryt-auth-owl-body {
+  transform: translateY(300px);
+}
+
+@keyframes gryt-owl-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96.5% { transform: scaleY(0.08); }
+}
+
+@keyframes gryt-owl-look {
+  0%, 100% { transform: translateX(0); }
+  28% { transform: translateX(-30px); }
+  68% { transform: translateX(30px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gryt-auth-owl-art * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .gryt-auth-pitch {
   margin: 0;
   font-size: 1.875rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
   color: var(--gryt-text);
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -100,18 +195,19 @@
 }
 
 .gryt-auth-pitch-sub {
-  margin: 0.875rem 0 0;
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
   color: var(--gryt-muted);
   max-width: 22rem;
 }
 
 .gryt-auth-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
-  margin: 0;
+  margin: auto 0 0;
   padding: 0;
   list-style: none;
 }
@@ -123,7 +219,7 @@
   padding: 0 0.8125rem;
   border: 1px solid var(--gryt-border);
   border-radius: var(--gryt-radius-full);
-  font-size: 0.78125rem;
+  font-size: 0.8125rem;
   color: var(--gryt-muted);
 }
 
@@ -138,7 +234,7 @@
      start the moment the content does not fit, and centres it when it does. */
   align-items: safe center;
   justify-content: center;
-  padding: 2.5rem 2rem;
+  padding: 2.5rem 3rem;
   overflow-y: auto;
   /* Without this the overflow-y above does nothing. A grid item's min-height
      defaults to auto, which refuses to shrink below its content — so on a tall
@@ -154,7 +250,7 @@
 
 .gryt-auth-shell {
   width: 100%;
-  max-width: 22rem;
+  max-width: 25rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -169,8 +265,9 @@
 .gryt-auth-title {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.022em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
   color: var(--gryt-text);
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -287,29 +384,60 @@
   font-size: 0.8125rem;
 }
 
-/* ── one column ─────────────────────────────────────────────
-   Below 768px the split becomes a compact masthead over the form. The pitch
-   and the chips are dropped rather than stacked: on a phone they push the
-   thing you came for below the fold, and someone signing in on their phone
-   has already decided. */
+/* Sizes from the draft: 14px labels, 44px fields with 16px text, 44px buttons, round checkboxes. */
+.gryt-auth-main .gryt-text-field > label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--gryt-text) 75%, var(--gryt-muted));
+}
+
+.gryt-auth-main .gryt-text-field-control {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+.gryt-auth-main .gryt-button {
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+}
+
+.gryt-auth-main .gryt-checkbox {
+  border-radius: var(--gryt-radius-full);
+}
+
+/* ── phone: the whole screen ────────────────────────────────
+   No card on a phone. The owl, the name and one line sit at the top, the form fills the rest,
+   and fields and buttons grow to 52px with 17px text. */
 
 @media (max-width: 767px) {
+  .gryt-auth-body {
+    display: block;
+    padding: 0;
+  }
+
   .gryt-auth-layout {
+    max-width: none;
+    max-height: none;
     grid-template-columns: 1fr;
-    /* minmax(0, 1fr) rather than 1fr, for the same reason as the desktop row:
-       a bare 1fr floors at the content's height and will not let the form
-       column scroll inside the card. */
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
   .gryt-auth-brand {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.75rem;
-    padding: 1.25rem 1.5rem;
+    padding: 2.5rem 1.25rem 0;
     border-right: 0;
-    border-bottom: 1px solid var(--gryt-border);
+    background: transparent;
+  }
+
+  .gryt-auth-owl {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .gryt-auth-tagline {
+    display: block;
   }
 
   .gryt-auth-pitch-block,
@@ -318,8 +446,37 @@
   }
 
   .gryt-auth-main {
-    padding: 2rem 1.5rem 3rem;
+    padding: 1.375rem 1.25rem 1.75rem;
     align-items: flex-start;
+    overflow-y: visible;
+  }
+
+  .gryt-auth-shell {
+    max-width: none;
+  }
+
+  .gryt-auth-title {
+    font-size: 1.75rem;
+  }
+
+  .gryt-auth-main .gryt-text-field > label,
+  .gryt-auth-row,
+  .gryt-auth-footer {
+    font-size: 0.9375rem;
+  }
+
+  .gryt-auth-main .gryt-text-field-control {
+    min-height: 3.25rem;
+    font-size: 1.0625rem;
+  }
+
+  .gryt-auth-main .gryt-button {
+    min-height: 3.25rem;
+    font-size: 1.0625rem;
+  }
+
+  .gryt-auth-row {
+    min-height: 2.75rem;
   }
 }
 
