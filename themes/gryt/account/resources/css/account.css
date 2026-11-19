@@ -233,3 +233,10 @@
 .pf-v5-c-form-control > :is(input, textarea, select):focus {
   outline: none;
 }
+
+/* grytMessageVault is the client's sealed key backup, written through the account API, so it stays
+   user-editable; the console ignores inputType hidden, so hide its section here. */
+section:has(> #user-metadata):has(#grytMessageVault),
+.pf-v5-c-jump-links__item[data-testid="jump-link-user-metadata"] {
+  display: none;
+}
