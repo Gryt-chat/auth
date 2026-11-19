@@ -154,7 +154,7 @@ final class Oidc {
     }
 
     // Keycloak marks its cookies Secure, which java.net's cookie store won't send over plain http.
-    private Resp withCookies(Map<String, String> jar, String method, String url, Map<String, String> form) {
+    Resp withCookies(Map<String, String> jar, String method, String url, Map<String, String> form) {
         Map<String, String> headers = new HashMap<>();
         if (!jar.isEmpty()) {
             headers.put("Cookie", String.join("; ", jar.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).toList()));
