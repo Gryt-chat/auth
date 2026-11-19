@@ -19,7 +19,7 @@ export function Page() {
     const idp = idpName(kcContext.idpAlias);
 
     return (
-        <Template headerNode={msg("emailLinkIdpTitle")} iconNode={<EnvelopeSimpleIcon size={24} weight="fill" />}>
+        <Template displayMessage={false} headerNode={msg("emailLinkIdpTitle")} iconNode={<EnvelopeSimpleIcon size={24} weight="fill" />}>
             <div className="gryt-auth-form">
                 <p id="instruction1" className="gryt-auth-prose">
                     {msg("grytLinkEmailSub", idp, kcContext.brokerContext.username)}

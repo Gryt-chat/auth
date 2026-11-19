@@ -213,6 +213,29 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
+    },
+    {
+      "clientId": "gryt-cloud",
+      "name": "Gryt Cloud",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "https://cloud.gryt.chat/api/auth/callback",
+        "http://localhost:5180/api/auth/callback"
+      ],
+      "webOrigins": [
+        "https://cloud.gryt.chat",
+        "http://localhost:5180"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ]
 }
