@@ -56,7 +56,7 @@ exit immediately and are safe to re-run.
 | `keycloak-bootstrap-admin` | Creates the master-realm admin if there isn't one. |
 | `keycloak-user-profile` | Applies `bootstrap/gryt-user-profile.json` through the admin API, once the server is up. |
 | `keycloak-security-policy` | Turns on brute-force protection and a password policy, through the admin API. |
-| `keycloak-identity-providers` | Turns on Sign in with Google when `GRYT_GOOGLE_CLIENT_ID` and `GRYT_GOOGLE_CLIENT_SECRET` are set. Does nothing without them. |
+| `keycloak-identity-providers` | Turns on Sign in with Google when `GRYT_GOOGLE_CLIENT_ID` and `GRYT_GOOGLE_CLIENT_SECRET` are set, and Sign in with Apple when the four `GRYT_APPLE_*` values are. Does nothing without them. |
 
 Two things about this are worth knowing before you change any of it.
 
@@ -643,7 +643,8 @@ only takes GET. Apple's client secret is also an ES256 JWT that you sign yoursel
 `keycloak-pairing/src/main/java/chat/gryt/keycloak/apple/` fills both gaps. It lives in
 `gryt-pairing.jar`, so it doesn't need another mount.
 
-To turn it on, add an identity provider of type `apple` with these settings:
+To turn it on, set the four `GRYT_APPLE_*` values in `.env` and the `keycloak-identity-providers`
+one-shot creates the provider. These are the settings it fills in:
 
 | Field | Value |
 |-------|-------|

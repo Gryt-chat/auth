@@ -438,6 +438,10 @@ services:
       GRYT_KEYCLOAK_ADMIN_PASSWORD: ${GRYT_KEYCLOAK_ADMIN_PASSWORD:-admin}
       GRYT_GOOGLE_CLIENT_ID: ${GRYT_GOOGLE_CLIENT_ID:-}
       GRYT_GOOGLE_CLIENT_SECRET: ${GRYT_GOOGLE_CLIENT_SECRET:-}
+      GRYT_APPLE_SERVICES_ID: ${GRYT_APPLE_SERVICES_ID:-}
+      GRYT_APPLE_TEAM_ID: ${GRYT_APPLE_TEAM_ID:-}
+      GRYT_APPLE_KEY_ID: ${GRYT_APPLE_KEY_ID:-}
+      GRYT_APPLE_PRIVATE_KEY: ${GRYT_APPLE_PRIVATE_KEY:-}
     entrypoint: ["sh", "/bootstrap/apply_identity_providers.sh"]
     volumes:
       - ./bootstrap/apply_identity_providers.sh:/bootstrap/apply_identity_providers.sh:ro
