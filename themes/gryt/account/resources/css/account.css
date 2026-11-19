@@ -2,9 +2,8 @@
  *
  * The console is a PatternFly 5 app we do not own, and every colour in it comes
  * from one table of custom properties. Remapping that table is the whole of this
- * file — no component is restyled, so a Keycloak upgrade that changes a
- * component cannot break it. The old login theme did the opposite and carried
- * 610 lines of overrides for it.
+ * file, plus a short block at the end that gives buttons and fields the
+ * @gryt/ui shapes.
  *
  * **Dark whatever the browser is set to**, like the login page it is reached
  * from. PatternFly's dark mode is a `.pf-v5-theme-dark` class the console's
@@ -17,6 +16,14 @@
  * its own stylesheet rather than guessed at. Anything it sets and this does not
  * would still be a Red Hat colour.
  */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("../fonts/AtkinsonHyperlegibleNextVF-Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* The greys, light to dark. PatternFly has ten and Gryt has seven, so a few
@@ -107,13 +114,11 @@
   --pf-v5-global--icon--Color--light--dark: var(--gryt-muted);
   --pf-v5-global--icon--Color--dark--dark: var(--gryt-text);
 
-  /* PatternFly ships Red Hat's faces and this theme does not, so its stack was
-     falling through to Helvetica. The login page runs on the system stack, so
-     this is the same text on both. */
-  --pf-v5-global--FontFamily--text: ui-sans-serif, system-ui, sans-serif;
-  --pf-v5-global--FontFamily--heading: ui-sans-serif, system-ui, sans-serif;
-  --pf-v5-global--FontFamily--redhatfont--text: ui-sans-serif, system-ui, sans-serif;
-  --pf-v5-global--FontFamily--redhatfont--heading: ui-sans-serif, system-ui, sans-serif;
+  /* Atkinson, the face the login page uses. */
+  --pf-v5-global--FontFamily--text: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--heading: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--redhatfont--text: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--redhatfont--heading: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The logo is a 1024-square owl and the masthead sizes brand images by height
@@ -130,4 +135,101 @@
 .keycloak__loading-container {
   color: var(--gryt-text);
   background-color: var(--gryt-bg);
+}
+
+/* Buttons and fields as @gryt/ui draws them: pill buttons, 12px fields, no PatternFly underline. */
+.pf-v5-c-button {
+  --pf-v5-c-button--BorderRadius: 999px;
+  --pf-v5-c-button--FontWeight: 600;
+  --pf-v5-c-button--PaddingTop: 0.5rem;
+  --pf-v5-c-button--PaddingBottom: 0.5rem;
+  --pf-v5-c-button--PaddingRight: 1.25rem;
+  --pf-v5-c-button--PaddingLeft: 1.25rem;
+  --pf-v5-c-button--after--BorderWidth: 0;
+  --pf-v5-c-button--hover--after--BorderWidth: 0;
+  --pf-v5-c-button--focus--after--BorderWidth: 0;
+  --pf-v5-c-button--active--after--BorderWidth: 0;
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--gryt-accent);
+  --pf-v5-c-button--m-primary--Color: var(--gryt-on-accent);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--gryt-accent-light);
+  --pf-v5-c-button--m-primary--hover--Color: var(--gryt-on-accent);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--gryt-accent-light);
+  --pf-v5-c-button--m-primary--focus--Color: var(--gryt-on-accent);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--gryt-accent-light);
+  --pf-v5-c-button--m-primary--active--Color: var(--gryt-on-accent);
+  --pf-v5-c-button--m-secondary--BackgroundColor: var(--gryt-surface-raised);
+  --pf-v5-c-button--m-secondary--Color: var(--gryt-text);
+  --pf-v5-c-button--m-secondary--hover--BackgroundColor: var(--gryt-surface-hover);
+  --pf-v5-c-button--m-secondary--hover--Color: var(--gryt-text);
+  --pf-v5-c-button--m-secondary--focus--BackgroundColor: var(--gryt-surface-hover);
+  --pf-v5-c-button--m-secondary--focus--Color: var(--gryt-text);
+  --pf-v5-c-button--m-secondary--active--BackgroundColor: var(--gryt-surface-hover);
+  --pf-v5-c-button--m-secondary--active--Color: var(--gryt-text);
+  --pf-v5-c-button--m-tertiary--BackgroundColor: var(--gryt-surface-raised);
+  --pf-v5-c-button--m-tertiary--Color: var(--gryt-text);
+  --pf-v5-c-button--m-tertiary--hover--BackgroundColor: var(--gryt-surface-hover);
+  --pf-v5-c-button--m-tertiary--hover--Color: var(--gryt-text);
+  --pf-v5-c-button--m-danger--BackgroundColor: var(--gryt-danger);
+  --pf-v5-c-button--m-danger--Color: var(--gryt-on-danger);
+  --pf-v5-c-button--m-danger--hover--BackgroundColor: var(--gryt-danger-light);
+  --pf-v5-c-button--m-danger--hover--Color: var(--gryt-on-danger);
+  --pf-v5-c-button--m-link--Color: var(--gryt-muted);
+  --pf-v5-c-button--m-link--hover--Color: var(--gryt-text);
+  --pf-v5-c-button--m-link--focus--Color: var(--gryt-text);
+  --pf-v5-c-button--m-link--active--Color: var(--gryt-text);
+  --pf-v5-c-button--disabled--BackgroundColor: var(--gryt-surface-raised);
+  --pf-v5-c-button--disabled--Color: var(--gryt-muted);
+  transition: scale 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 150ms;
+}
+
+.pf-v5-c-button:not(.pf-m-plain, .pf-m-link, .pf-m-inline, .pf-m-control) {
+  min-height: 2.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pf-v5-c-button:not(.pf-m-plain, .pf-m-inline, :disabled, .pf-m-disabled):hover {
+    scale: 1.03;
+  }
+
+  .pf-v5-c-button:not(.pf-m-plain, .pf-m-inline, :disabled, .pf-m-disabled):active {
+    scale: 0.96;
+  }
+}
+
+.pf-v5-c-button:focus-visible {
+  outline: 2px solid var(--gryt-accent-light);
+  outline-offset: 2px;
+}
+
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: var(--gryt-surface-raised);
+  min-height: 2.75rem;
+  border-radius: 12px;
+}
+
+.pf-v5-c-form-control::before {
+  border: 1px solid var(--gryt-border);
+  border-radius: inherit;
+}
+
+.pf-v5-c-form-control::after {
+  border: 0;
+}
+
+.pf-v5-c-form-control:is(.pf-m-disabled, .pf-m-readonly) {
+  --pf-v5-c-form-control--BackgroundColor: var(--gryt-surface);
+  color: var(--gryt-muted);
+}
+
+.pf-v5-c-form-control:focus-within {
+  outline: 2px solid var(--gryt-accent-light);
+  outline-offset: 2px;
+}
+
+.pf-v5-c-form-control > :is(input, textarea, select) {
+  padding-inline: 0.9375rem;
+}
+
+.pf-v5-c-form-control > :is(input, textarea, select):focus {
+  outline: none;
 }

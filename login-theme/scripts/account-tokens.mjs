@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 const src = fileURLToPath(new URL("../node_modules/@gryt/ui/dist/theme.css", import.meta.url));
 const out = fileURLToPath(new URL("../../themes/gryt/account/resources/css/tokens.css", import.meta.url));
 
-const theme = readFileSync(src, "utf8");
+// Dark only, like the login page: the .light block repeats every name, and in one flat :root it won.
+const theme = readFileSync(src, "utf8").split(/^\.light\s*\{/m)[0];
 
 // Only the colours. The spring curve and the font stack are for components this console
 // does not have, and shipping them would suggest otherwise.
