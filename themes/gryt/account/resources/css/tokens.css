@@ -118,6 +118,8 @@
   --gryt-on-accent: #0c0a20;
   --gryt-on-secondary: #02121a;
   --gryt-on-danger: #1f0405;
+  --gryt-unread: #ed756e;
+  --gryt-on-unread: #2a0c0a;
   --gryt-neutral-1: #f1f2f7;
   --gryt-neutral-2: #ffffff;
   --gryt-neutral-3: #f7f8fb;
@@ -229,4 +231,5 @@
   --gryt-danger: var(--gryt-danger-9);
   --gryt-danger-light: var(--gryt-danger-10);
   --gryt-warning: var(--gryt-warning-9);
+  --gryt-unread: #d15c56;
 }
