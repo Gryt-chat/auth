@@ -325,10 +325,30 @@
 .gryt-auth-alternatives {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   margin: 0;
-  padding-top: 1rem;
-  border-top: 1px solid var(--gryt-border);
+}
+
+.gryt-auth-or {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--gryt-muted);
+}
+
+.gryt-auth-or::before,
+.gryt-auth-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--gryt-border);
+}
+
+.gryt-auth-main .gryt-auth-quiet {
+  width: 100%;
+  min-height: 2.5rem;
+  color: color-mix(in srgb, var(--gryt-text) 75%, var(--gryt-muted));
 }
 
 .gryt-auth-alternatives form {
@@ -477,6 +497,14 @@
 
   .gryt-auth-row {
     min-height: 2.75rem;
+  }
+
+  .gryt-auth-reveal {
+    height: 2.625rem;
+  }
+
+  .gryt-auth-main .gryt-auth-quiet {
+    min-height: 3rem;
   }
 }
 
@@ -964,19 +992,38 @@
 /* The password field and its reveal toggle sit on one row so the toggle does
    not push the next field down. */
 .gryt-auth-password {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  position: relative;
 }
 
-.gryt-auth-password > :first-child {
-  flex: 1;
-  min-width: 0;
+.gryt-auth-password .gryt-text-field-control,
+.gryt-auth-password > input {
+  padding-right: 4.75rem;
 }
 
+/* Sits inside the field's bottom-right corner, which is where the input is whether or not a label sits above it. */
 .gryt-auth-reveal {
-  flex: none;
-  white-space: nowrap;
+  position: absolute;
+  right: 0.3125rem;
+  bottom: 0.3125rem;
+  height: 2.125rem;
+  padding: 0 0.875rem;
+  border: 0;
+  border-radius: var(--gryt-radius-full);
+  background: var(--gryt-border);
+  color: var(--gryt-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gryt-auth-reveal:hover {
+  background: color-mix(in srgb, var(--gryt-border) 70%, var(--gryt-text));
+}
+
+.gryt-auth-reveal:focus-visible {
+  outline: 2px solid var(--gryt-accent);
+  outline-offset: 2px;
 }
 
 /* ── the animated backdrop ───────────────────────────────────
@@ -1013,7 +1060,7 @@
 }
 
 .gryt-auth-providers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: 0.625rem;
 }

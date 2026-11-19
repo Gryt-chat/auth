@@ -30,7 +30,7 @@ function AppleMark() {
 
 const MARKS: Record<string, () => React.ReactElement> = { google: GoogleMark, apple: AppleMark };
 
-/** Below the email form, never above it: email sign-up stays the first thing you see. */
+/** Side by side under "or", below the email form: email sign-up stays the first thing you see. */
 export function SocialProviders() {
     const { kcContext } = useKcContext();
     assert("social" in kcContext && kcContext.social !== undefined);
@@ -50,8 +50,9 @@ export function SocialProviders() {
                         tone="neutral"
                         size="large"
                         startIcon={Mark ? <Mark /> : undefined}
+                        aria-label={`Continue with ${p.displayName}`}
                     >
-                        Continue with {p.displayName}
+                        {p.displayName}
                     </Button>
                 );
             })}
