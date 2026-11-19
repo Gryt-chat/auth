@@ -53,6 +53,8 @@ export function Template(props: {
   displayRequiredFields?: boolean;
   headerNode: ReactNode;
   subtitleNode?: ReactNode;
+  iconNode?: ReactNode;
+  iconTone?: "info" | "success" | "danger";
   socialProvidersNode?: ReactNode;
   infoNode?: ReactNode;
   documentTitle?: string;
@@ -65,6 +67,8 @@ export function Template(props: {
     displayRequiredFields = false,
     headerNode,
     subtitleNode,
+    iconNode,
+    iconTone = "info",
     socialProvidersNode = null,
     infoNode = null,
     documentTitle,
@@ -187,6 +191,15 @@ export function Template(props: {
                       {msg("restartLoginTooltip")}
                     </a>
                   )}
+                </div>
+              ) : iconNode ? (
+                <div className="gryt-auth-titlerow">
+                  <span className={`gryt-auth-icon is-${iconTone}`} aria-hidden>
+                    {iconNode}
+                  </span>
+                  <h1 id="kc-page-title" className="gryt-auth-title">
+                    {headerNode}
+                  </h1>
                 </div>
               ) : (
                 <h1 id="kc-page-title" className="gryt-auth-title">

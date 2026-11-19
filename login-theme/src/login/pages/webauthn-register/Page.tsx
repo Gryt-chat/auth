@@ -3,6 +3,7 @@
  * --revert` restores it. The button stays outside the form, type="submit", with that id.
  */
 
+import { FingerprintIcon } from "@phosphor-icons/react";
 import { Button } from "@gryt/ui";
 import { assert } from "tsafe/assert";
 import { useKcContext } from "../../KcContext";
@@ -21,7 +22,11 @@ export function Page() {
     useScript({ webAuthnButtonId });
 
     return (
-        <Template headerNode={msgStr("webauthn-registration-title")}>
+        <Template
+            headerNode={msgStr("webauthn-registration-title")}
+            subtitleNode={msgStr("grytPasskeyRegisterSub")}
+            iconNode={<FingerprintIcon size={24} weight="fill" />}
+        >
             <div className="gryt-auth-form">
                 <form id="register" action={kcContext.url.loginAction} method="post">
                     <input type="hidden" id="clientDataJSON" name="clientDataJSON" />
@@ -53,10 +58,11 @@ export function Page() {
                                 name="cancel-aia"
                                 value="true"
                                 type="submit"
-                                tone="neutral"
+                                tone="ghost"
                                 size="large"
+                                className="gryt-auth-quiet"
                             >
-                                {msg("doCancel")}
+                                {msg("grytNotNow")}
                             </Button>
                         </form>
                     )}

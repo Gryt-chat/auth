@@ -274,6 +274,38 @@
   min-width: 0;
 }
 
+.gryt-auth-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.gryt-auth-titlerow .gryt-auth-title {
+  flex: 1;
+  font-size: 1.375rem;
+}
+
+.gryt-auth-icon {
+  flex: none;
+  display: grid;
+  place-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gryt-accent) 16%, var(--gryt-surface));
+  color: var(--gryt-accent);
+}
+
+.gryt-auth-icon.is-success {
+  background: color-mix(in srgb, var(--gryt-success) 16%, var(--gryt-surface));
+  color: var(--gryt-success);
+}
+
+.gryt-auth-icon.is-danger {
+  background: color-mix(in srgb, var(--gryt-danger) 16%, var(--gryt-surface));
+  color: var(--gryt-danger);
+}
+
 .gryt-auth-hint {
   margin: -0.5rem 0 0;
   font-size: 0.8125rem;
@@ -490,6 +522,10 @@
 
   .gryt-auth-title {
     font-size: 1.75rem;
+  }
+
+  .gryt-auth-titlerow .gryt-auth-title {
+    font-size: 1.5rem;
   }
 
   .gryt-auth-main .gryt-text-field > label,

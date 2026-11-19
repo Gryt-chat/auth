@@ -3,6 +3,7 @@
  * --revert` restores it. Every id is Keycloak's contract, and the button stays type="button".
  */
 
+import { FingerprintIcon } from "@phosphor-icons/react";
 import { Button } from "@gryt/ui";
 import { Fragment } from "react";
 import { assert } from "tsafe/assert";
@@ -15,7 +16,7 @@ export function Page() {
     const { kcContext } = useKcContext();
     assert(kcContext.pageId === "webauthn-authenticate.ftl");
 
-    const { url, realm, registrationDisabled, authenticators, shouldDisplayAuthenticators } =
+    const { url, authenticators, shouldDisplayAuthenticators } =
         kcContext;
     const { msg, msgStr, advancedMsg } = useI18n();
 
@@ -27,18 +28,9 @@ export function Page() {
 
     return (
         <Template
-            displayInfo={realm.registrationAllowed && !registrationDisabled}
-            infoNode={
-                <div id="kc-registration">
-                    <span>
-                        {msg("noAccount")}{" "}
-                        <a className="gryt-auth-link" href={url.registrationUrl}>
-                            {msg("doRegister")}
-                        </a>
-                    </span>
-                </div>
-            }
             headerNode={msgStr("webauthn-login-title")}
+            subtitleNode={msgStr("grytPasskeySub")}
+            iconNode={<FingerprintIcon size={24} weight="fill" />}
         >
             <div id="kc-form-webauthn" className="gryt-auth-form">
                 <form id="webauth" action={url.loginAction} method="post">
