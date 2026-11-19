@@ -643,6 +643,28 @@
   outline-offset: 2px;
 }
 
+.gryt-auth-option-icon {
+  flex: none;
+  display: grid;
+  place-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--gryt-border);
+  color: var(--gryt-accent);
+}
+
+.gryt-auth-callout {
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--gryt-accent) 30%, var(--gryt-border));
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--gryt-accent) 8%, var(--gryt-surface));
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--gryt-text) 75%, var(--gryt-muted));
+}
+
 .gryt-auth-option-text {
   display: flex;
   flex-direction: column;

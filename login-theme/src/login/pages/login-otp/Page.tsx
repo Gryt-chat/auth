@@ -22,7 +22,7 @@ export function Page() {
     const credentials = kcContext.otpLogin.userOtpCredentials;
 
     return (
-        <Template displayMessage={!hasError} headerNode={msgStr("doLogIn")}>
+        <Template displayMessage={!hasError} headerNode={msgStr("grytOtpTitle")} subtitleNode={msgStr("grytOtpSub")}>
             <form
                 id="kc-otp-login-form"
                 className="gryt-auth-form"
@@ -77,7 +77,7 @@ export function Page() {
                         size="large"
                         disabled={isSubmitting}
                     >
-                        {msgStr("doLogIn")}
+                        {msgStr("grytVerify")}
                     </Button>
                 </div>
             </form>
