@@ -49,7 +49,8 @@ class AppleIT {
         String path = "/realms/" + TestKeycloak.REALM;
         String query = TestKeycloak.form(Map.of(
                 "client_id", PairingResource.CLIENT_ID, "redirect_uri", Oidc.REDIRECT, "response_type", "code",
-                "scope", "openid", "state", "s", "kc_idp_hint", "apple"));
+                "scope", "openid", "state", "s", "kc_idp_hint", "apple",
+                "code_challenge", "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method", "S256"));
         Resp hint = oidc.withCookies(jar, "GET", path + "/protocol/openid-connect/auth?" + query, null);
         String toBroker = hint.header("Location");
         assertTrue(toBroker != null && toBroker.contains("/broker/apple/login"), hint.status() + " " + toBroker);
