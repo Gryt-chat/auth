@@ -274,6 +274,13 @@
   min-width: 0;
 }
 
+.gryt-auth-hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--gryt-muted);
+}
+
 .gryt-auth-subtitle {
   margin: 0;
   font-size: 0.9375rem;
@@ -354,6 +361,12 @@
 .gryt-auth-alternatives form {
   display: flex;
   flex-direction: column;
+}
+
+.gryt-auth-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .gryt-auth-footer {
@@ -485,7 +498,8 @@
     font-size: 0.9375rem;
   }
 
-  .gryt-auth-main .gryt-text-field-control {
+  .gryt-auth-main .gryt-text-field-control,
+  .gryt-auth-main input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="hidden"]):not([class*="gryt-"]) {
     min-height: 3.25rem;
     font-size: 1.0625rem;
   }
@@ -911,21 +925,28 @@
 .gryt-auth-main label:not([class*="gryt-"]) {
   display: inline-block;
   font-size: 0.875rem;
-  color: var(--gryt-muted);
+  font-weight: 600;
+  color: color-mix(in srgb, var(--gryt-text) 75%, var(--gryt-muted));
+}
+
+/* Every field here is required, so the " *" Keycloakify prints as a bare text node goes. */
+.gryt-auth-main .kcLabelWrapperClass {
+  font-size: 0;
+  margin-bottom: 0.4375rem;
 }
 
 .gryt-auth-main input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([class*="gryt-"]),
 .gryt-auth-main select:not([class*="gryt-"]),
 .gryt-auth-main textarea:not([class*="gryt-"]) {
   width: 100%;
-  min-height: 2.875rem;
+  min-height: 2.75rem;
   padding: 0 0.9375rem;
   border: 1px solid var(--gryt-border);
   border-radius: var(--gryt-radius-md);
   background: var(--gryt-surface-raised);
   color: var(--gryt-text);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   outline: none;
 }
 

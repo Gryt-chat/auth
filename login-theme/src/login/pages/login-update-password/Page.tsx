@@ -10,6 +10,7 @@ import { useKcContext } from "../../KcContext";
 import { useI18n } from "../../i18n";
 import { Template } from "../../components/Template";
 import { LogoutOtherSessions } from "../../components/LogoutOtherSessions";
+import { PasswordWrapper } from "../../components/PasswordWrapper";
 
 export function Page() {
     const { kcContext } = useKcContext();
@@ -33,16 +34,18 @@ export function Page() {
                 method="post"
             >
                 <div>
-                    <TextField
-                        id="password-new"
-                        name="password-new"
-                        type="password"
-                        label={msgStr("passwordNew")}
-                        autoFocus
-                        autoComplete="new-password"
-                        error={newError}
-                        aria-invalid={newError}
-                    />
+                    <PasswordWrapper passwordInputId="password-new">
+                        <TextField
+                            id="password-new"
+                            name="password-new"
+                            type="password"
+                            label={msgStr("passwordNew")}
+                            autoFocus
+                            autoComplete="new-password"
+                            error={newError}
+                            aria-invalid={newError}
+                        />
+                    </PasswordWrapper>
                     {newError && (
                         <span
                             id="input-error-password"
@@ -84,7 +87,7 @@ export function Page() {
 
                 <div id="kc-form-buttons" className="gryt-auth-actions">
                     <Button type="submit" size="large">
-                        {msgStr("doSubmit")}
+                        {msgStr("grytSavePassword")}
                     </Button>
                     {isAppInitiatedAction && (
                         <Button
