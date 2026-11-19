@@ -20,6 +20,7 @@ export function Page() {
     return (
         <Template
             displayInfo={false}
+            displayMessage={kcContext.message?.type !== "warning"}
             headerNode={msgStr("emailVerifyTitle")}
             iconNode={<EnvelopeSimpleIcon size={24} weight="fill" />}
         >
