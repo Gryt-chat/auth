@@ -30,6 +30,7 @@ itself.
 | **HAProxy** | Reverse proxy for production TLS termination |
 | **Bootstrap** | One-shot containers that bring a fresh Keycloak into a usable state ([details](#bootstrap)) |
 | **Pairing extension** | A Keycloak provider that lets a signed-in app approve a new device's sign-in ([details](#pairing-extension)) |
+| **Sign in with Apple** | A Keycloak identity provider for Apple, in the same jar as the pairing extension ([details](#sign-in-with-apple)) |
 | **Ops** | Backup, off-site copy and restore tooling for the Postgres database |
 
 ## Development setup
@@ -632,3 +633,21 @@ in one place rather than ten, so it cannot fall out of step across repositories.
 ## License
 
 [AGPL-3.0](https://github.com/Gryt-chat/gryt/blob/main/LICENSE) — Part of [Gryt](https://github.com/Gryt-chat/gryt)
+
+## Sign in with Apple
+
+Keycloak has no Apple provider, and its generic OIDC one can't talk to Apple. When you ask for
+the email, Apple posts the result back instead of redirecting, and Keycloak's broker callback
+only takes GET. Apple's client secret is also an ES256 JWT that you sign yourself.
+`keycloak-pairing/src/main/java/chat/gryt/keycloak/apple/` fills both gaps. It lives in
+`gryt-pairing.jar`, so it doesn't need another mount.
+
+To turn it on, add an identity provider of type `apple` with these settings:
+
+| Field | Value |
+|-------|-------|
+| Client ID | The Services ID from the Apple Developer account |
+| Client secret | The Sign in with Apple key (`.p8` file contents), or a vault reference to it |
+| Team ID, Key ID | From the same account |
+
+Apple's return URL is `https://<auth host>/realms/gryt/broker/apple/endpoint`.
