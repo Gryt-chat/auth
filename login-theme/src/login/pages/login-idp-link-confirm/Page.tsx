@@ -19,7 +19,7 @@ export function Page() {
     const idp = idpName(kcContext.idpAlias);
 
     return (
-        <Template headerNode={msg("confirmLinkIdpTitle")} subtitleNode={msgStr("grytLinkSub", idp)}>
+        <Template displayMessage={false} headerNode={msg("confirmLinkIdpTitle")} subtitleNode={msgStr("grytLinkSub", idp)}>
             <form id="kc-register-form" className="gryt-auth-form" action={kcContext.url.loginAction} method="post">
                 <p className="gryt-auth-callout">{msg("grytLinkNote")}</p>
                 <div className="gryt-auth-actions">
