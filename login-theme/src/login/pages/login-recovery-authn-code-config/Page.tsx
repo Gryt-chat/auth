@@ -3,7 +3,7 @@
  * --revert` restores it. `useScript` binds print, download and copy by element id.
  */
 
-import { Alert, Button } from "@gryt/ui";
+import { Button, Checkbox } from "@gryt/ui";
 import { assert } from "tsafe/assert";
 import { useState } from "react";
 import { useScript } from "./useScript";
@@ -23,15 +23,13 @@ export function Page() {
     const { msg, msgStr } = useI18n();
 
     const [confirmed, setConfirmed] = useState(false);
+    const [nudged, setNudged] = useState(false);
 
     useScript({ olRecoveryCodesListId });
 
     return (
-        <Template headerNode={msg("recovery-code-config-header")}>
+        <Template headerNode={msg("recovery-code-config-header")} subtitleNode={msg("grytRecoverySub")}>
             <div className="gryt-auth-form">
-                <Alert severity="warning">
-                    {msg("recovery-code-config-warning-message")}
-                </Alert>
 
                 <ol id={olRecoveryCodesListId} className="gryt-auth-codes">
                     {recoveryAuthnCodesConfigBean.generatedRecoveryAuthnCodesList.map(
@@ -46,33 +44,39 @@ export function Page() {
                 {/* Type is "button" on all three: they sit outside the form
                     below, but a stray submit here would post the page and the
                     codes are shown once. */}
-                <div className="gryt-auth-code-actions">
-                    <button id="printRecoveryCodes" className="gryt-auth-link" type="button">
-                        {msg("recovery-codes-print")}
-                    </button>
-                    <button id="downloadRecoveryCodes" className="gryt-auth-link" type="button">
-                        {msg("recovery-codes-download")}
-                    </button>
-                    <button id="copyRecoveryCodes" className="gryt-auth-link" type="button">
+                <div className="gryt-auth-providers">
+                    <Button id="copyRecoveryCodes" type="button" tone="neutral" size="large">
                         {msg("recovery-codes-copy")}
-                    </button>
+                    </Button>
+                    <Button id="downloadRecoveryCodes" type="button" tone="neutral" size="large">
+                        {msg("recovery-codes-download")}
+                    </Button>
                 </div>
 
                 <label className="gryt-auth-confirm" htmlFor="kcRecoveryCodesConfirmationCheck">
-                    <input
-                        type="checkbox"
+                    <Checkbox
                         id="kcRecoveryCodesConfirmationCheck"
-                        name="kcRecoveryCodesConfirmationCheck"
                         checked={confirmed}
-                        onChange={event => setConfirmed(event.target.checked)}
+                        onCheckedChange={(checked: boolean) => {
+                            setConfirmed(checked);
+                            setNudged(false);
+                        }}
                     />
                     <span>{msg("recovery-codes-confirmation-message")}</span>
                 </label>
+                {nudged && <span className="gryt-auth-error" role="alert">{msg("grytRecoveryNudge")}</span>}
 
                 <form
                     action={url.loginAction}
                     id="kc-recovery-codes-settings-form"
                     method="post"
+                    onSubmit={event => {
+                        // Never disabled: an unticked box gets a line saying why, and no submit.
+                        if (!confirmed && !(event.nativeEvent as SubmitEvent).submitter?.hasAttribute("name")) {
+                            event.preventDefault();
+                            setNudged(true);
+                        }
+                    }}
                 >
                     <input
                         type="hidden"
@@ -98,11 +102,10 @@ export function Page() {
                             id="saveRecoveryAuthnCodesBtn"
                             type="submit"
                             size="large"
-                            disabled={!confirmed}
                         >
                             {isAppInitiatedAction
                                 ? msgStr("recovery-codes-action-complete")
-                                : msgStr("doSubmit")}
+                                : msgStr("grytContinue")}
                         </Button>
                         {isAppInitiatedAction && (
                             <Button

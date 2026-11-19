@@ -866,9 +866,13 @@
    innerText, and a "1:" prefix ends up in the clipboard. */
 .gryt-auth-codes {
   margin: 0;
-  padding-left: 1.75rem;
+  padding: 0.875rem;
+  list-style: none;
+  border: 1px solid var(--gryt-border);
+  border-radius: 0.875rem;
+  background: var(--gryt-surface-raised);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.25rem 1rem;
   font-family: var(--gryt-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 0.875rem;
@@ -893,7 +897,7 @@
 
 .gryt-auth-confirm {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.5;
