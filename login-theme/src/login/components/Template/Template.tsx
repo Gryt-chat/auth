@@ -9,6 +9,7 @@ import { useSetClassName } from "@keycloakify/login-ui/tools/useSetClassname";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useI18n } from "../../i18n";
+import { OwlMark } from "../OwlMark";
 import { ShaderBackground } from "../ShaderBackground/ShaderBackground";
 import { useKcContext } from "../../KcContext";
 import { useInitializeTemplate } from "./useInitializeTemplate";
@@ -110,7 +111,13 @@ export function Template(props: {
                 what Gryt is — so it says so. Copy is the site's own, not
                 written for this page. */}
         <aside className="gryt-auth-brand">
-          <div className="gryt-auth-wordmark">Gryt</div>
+          <div className="gryt-auth-mark">
+            <OwlMark />
+            <div className="gryt-auth-mark-text">
+              <span className="gryt-auth-wordmark">Gryt</span>
+              <span className="gryt-auth-tagline">Voice, text and video chat</span>
+            </div>
+          </div>
 
           <div className="gryt-auth-pitch-block">
             <p className="gryt-auth-pitch">Voice, text and video chat.</p>
