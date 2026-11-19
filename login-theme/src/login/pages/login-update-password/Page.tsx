@@ -24,7 +24,7 @@ export function Page() {
 
     return (
         <Template
-            displayMessage={!messagesPerField.existsError("password", "password-confirm")}
+            displayMessage={!messagesPerField.existsError("password", "password-confirm") && kcContext.message?.type !== "warning"}
             headerNode={msgStr("updatePasswordTitle")}
         >
             <form

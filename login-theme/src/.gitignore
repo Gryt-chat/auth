@@ -7,6 +7,7 @@
 # login/components/PasswordWrapper.tsx
 # login/components/Template/Template.tsx
 # login/components/UserProfileFormFields/DO_MAKE_USER_CONFIRM_PASSWORD.ts
+# login/components/UserProfileFormFields/GroupLabel.tsx
 # login/pages/delete-account-confirm/Page.tsx
 # login/pages/error/Page.tsx
 # login/pages/info/Page.tsx
@@ -42,7 +43,6 @@
 /login/components/Template/useInitializeTemplate.ts
 /login/components/UserProfileFormFields/AddRemoveButtonsMultiValuedAttribute.tsx
 /login/components/UserProfileFormFields/FieldErrors.tsx
-/login/components/UserProfileFormFields/GroupLabel.tsx
 /login/components/UserProfileFormFields/index.ts
 /login/components/UserProfileFormFields/InputFieldByType.tsx
 /login/components/UserProfileFormFields/InputLabel.tsx
