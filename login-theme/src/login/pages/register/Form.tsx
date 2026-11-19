@@ -17,7 +17,8 @@ export function Form() {
 
   const { msg, msgStr } = useI18n();
 
-  const [isFormSubmittable, setIsFormSubmittable] = useState(false);
+  // Never disabled: Keycloak checks the form and says what is missing.
+  const [, setIsFormSubmittable] = useState(false);
   const [areTermsAccepted, setAreTermsAccepted] = useState(false);
 
   useLayoutEffect(() => {
@@ -41,6 +42,7 @@ export function Form() {
       <UserProfileFormFields
         onIsFormSubmittableValueChange={setIsFormSubmittable}
       />
+      <p className="gryt-auth-hint">{msg("grytPasswordHint")}</p>
 
       {kcContext.termsAcceptanceRequired && (
         <TermsAcceptance
@@ -64,20 +66,11 @@ export function Form() {
         <Button
           type="submit"
           size="large"
-          disabled={
-            !isFormSubmittable ||
-            (kcContext.termsAcceptanceRequired && !areTermsAccepted)
-          }
         >
-          {msgStr("doRegister")}
+          {msgStr("grytCreateAccount")}
         </Button>
       </div>
 
-      <div id="kc-form-options" className="gryt-auth-footer">
-        <a className="gryt-auth-link" href={kcContext.url.loginUrl}>
-          {msg("backToLogin")}
-        </a>
-      </div>
     </form>
   );
 }

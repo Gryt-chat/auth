@@ -52,6 +52,7 @@ export function Template(props: {
   displayMessage?: boolean;
   displayRequiredFields?: boolean;
   headerNode: ReactNode;
+  subtitleNode?: ReactNode;
   socialProvidersNode?: ReactNode;
   infoNode?: ReactNode;
   documentTitle?: string;
@@ -63,6 +64,7 @@ export function Template(props: {
     displayMessage = true,
     displayRequiredFields = false,
     headerNode,
+    subtitleNode,
     socialProvidersNode = null,
     infoNode = null,
     documentTitle,
@@ -191,6 +193,8 @@ export function Template(props: {
                   {headerNode}
                 </h1>
               )}
+
+              {subtitleNode && <p className="gryt-auth-subtitle">{subtitleNode}</p>}
 
               {displayRequiredFields && (
                 <p className="gryt-auth-subtitle">

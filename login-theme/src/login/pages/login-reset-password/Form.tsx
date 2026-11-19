@@ -51,14 +51,11 @@ export function Form() {
 
       <div id="kc-form-buttons" className="gryt-auth-actions">
         <Button type="submit" size="large">
-          {msgStr("doSubmit")}
+          {msgStr("grytSendResetLink")}
         </Button>
-      </div>
-
-      <div id="kc-form-options" className="gryt-auth-footer">
-        <a className="gryt-auth-link" href={kcContext.url.loginUrl}>
+        <Button render={<a href={kcContext.url.loginUrl} />} nativeButton={false} tone="ghost" size="large" className="gryt-auth-quiet">
           {msg("backToLogin")}
-        </a>
+        </Button>
       </div>
     </form>
   );

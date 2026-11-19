@@ -6,6 +6,7 @@
 # login/components/LogoutOtherSessions.tsx
 # login/components/PasswordWrapper.tsx
 # login/components/Template/Template.tsx
+# login/components/UserProfileFormFields/DO_MAKE_USER_CONFIRM_PASSWORD.ts
 # login/pages/delete-account-confirm/Page.tsx
 # login/pages/error/Page.tsx
 # login/pages/info/Page.tsx
@@ -17,10 +18,12 @@
 # login/pages/login-page-expired/Page.tsx
 # login/pages/login-recovery-authn-code-config/Page.tsx
 # login/pages/login-reset-password/Form.tsx
+# login/pages/login-reset-password/Page.tsx
 # login/pages/login-update-password/Page.tsx
 # login/pages/login-verify-email/Page.tsx
 # login/pages/logout-confirm/Page.tsx
 # login/pages/register/Form.tsx
+# login/pages/register/Page.tsx
 # login/pages/select-authenticator/Page.tsx
 # login/pages/update-email/Page.tsx
 # login/pages/webauthn-authenticate/Page.tsx
@@ -36,7 +39,6 @@
 /login/components/Template/index.ts
 /login/components/Template/useInitializeTemplate.ts
 /login/components/UserProfileFormFields/AddRemoveButtonsMultiValuedAttribute.tsx
-/login/components/UserProfileFormFields/DO_MAKE_USER_CONFIRM_PASSWORD.ts
 /login/components/UserProfileFormFields/FieldErrors.tsx
 /login/components/UserProfileFormFields/GroupLabel.tsx
 /login/components/UserProfileFormFields/index.ts
@@ -89,7 +91,6 @@
 /login/pages/login-reset-otp/index.ts
 /login/pages/login-reset-otp/Page.tsx
 /login/pages/login-reset-password/index.ts
-/login/pages/login-reset-password/Page.tsx
 /login/pages/login-update-password/index.ts
 /login/pages/login-update-profile/index.ts
 /login/pages/login-update-profile/Page.tsx
@@ -101,7 +102,6 @@
 /login/pages/login-x509-info/Page.tsx
 /login/pages/logout-confirm/index.ts
 /login/pages/register/index.ts
-/login/pages/register/Page.tsx
 /login/pages/register/TermsAcceptance.tsx
 /login/pages/saml-post-form/index.ts
 /login/pages/saml-post-form/Page.tsx

@@ -65,7 +65,7 @@ function Dev() {
     if (realRealm) {
       const realm = ctx.realm as Record<string, unknown> | undefined;
       if (realm) realm.registrationEmailAsUsername = true;
-      if (ctx.social) {
+      if (ctx.social || pageId === "register.ftl") {
         ctx.social = { displayInfo: true, providers: [{ alias: "google", providerId: "google", displayName: "Google", loginUrl: "#", iconClasses: "" }, { alias: "apple", providerId: "apple", displayName: "Apple", loginUrl: "#", iconClasses: "" }] };
       }
       // attributesByName, not attributes — the mock keys them by name and
